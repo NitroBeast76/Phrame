@@ -1,0 +1,461 @@
+html, body, #root { background: transparent; margin: 0; width: 100%; height: 100%; overflow: hidden; }
+.sb-root {
+	/* Same surface as the notch when it is pushed out, so the two look like one piece. */
+	--sb-surface: var(--bloom-bg-expanded, rgba(0, 0, 0, 0.92));
+	--sb-text: var(--bloom-text, #fff);
+	--sb-bar-w: 56px;
+	--sb-fillet: 20px; /* keep equal to FILLET in SidebarFrame.tsx */
+	--sb-strip: 11px; /* thin strip along the top; keep equal to FRAME_STRIP_H in sidebar.rs */
+	position: fixed; inset: 0; pointer-events: none;
+	font-family: system-ui, sans-serif;
+}
+/* The bar: flush with the screen edge, full height. Only the inner corners are rounded. */
+.sb-bar {
+	pointer-events: auto; position: absolute; top: var(--sb-strip); bottom: var(--sb-strip); width: var(--sb-bar-w);
+	display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 3px 0 10px;
+	box-sizing: border-box; background: var(--sb-surface); color: var(--sb-text);
+	backdrop-filter: blur(20px);
+	transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s;
+}
+/* The bar sits between the top and bottom strips, so both its inner corners stay square and curve into the strips through the fillets. */
+.sb-root.left .sb-bar { left: 0; border-radius: 0; }
+.sb-root.right .sb-bar { right: 0; border-radius: 0; }
+/* Peek has no strip on screen: the bar is a free-standing piece again, rounded at both inner corners. */
+.sb-root.m-peek .sb-bar { top: 0; bottom: 0; }
+.sb-root.m-peek .sb-fillet.bottom { bottom: 0; }
+.sb-root.m-peek.left .sb-bar { border-radius: 0 22px 22px 0; }
+.sb-root.m-peek.right .sb-bar { border-radius: 22px 0 0 22px; }
+.sb-root.m-peek .sb-fillet.top { display: none; }
+/* Curved joins at the top and bottom of the inner edge: the bar flares into the screen edge like
+   a frame corner. Pure decoration, same surface colour as the bar and the notch. */
+.sb-fillet { position: absolute; width: var(--sb-fillet); height: var(--sb-fillet); pointer-events: none; transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s; }
+.sb-root.left .sb-fillet { left: var(--sb-bar-w); }
+.sb-root.right .sb-fillet { right: var(--sb-bar-w); }
+.sb-fillet.top { top: var(--sb-strip); }
+.sb-fillet.bottom { bottom: var(--sb-strip); }
+.sb-root.left .sb-fillet.top { background: radial-gradient(circle at 100% 100%, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.left .sb-fillet.bottom { background: radial-gradient(circle at 100% 0, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.right .sb-fillet.top { background: radial-gradient(circle at 0 100%, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.right .sb-fillet.bottom { background: radial-gradient(circle at 0 0, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.left.hidden .sb-bar, .sb-root.left.hidden .sb-fillet { transform: translateX(-72px); }
+.sb-root.right.hidden .sb-bar, .sb-root.right.hidden .sb-fillet { transform: translateX(72px); }
+.sb-root.hidden .sb-bar, .sb-root.hidden .sb-fillet { opacity: 0; }
+/* Thin hover strip so the bar can be summoned while hidden. */
+.sb-root::after { content: ""; position: absolute; top: 0; bottom: 0; width: 6px; pointer-events: auto; }
+.sb-root.left::after { left: 0; } .sb-root.right::after { right: 0; }
+.sb-apps { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 2px 0; box-sizing: border-box; overflow-y: auto; scrollbar-width: none; } /* padding = PAD in Sidebar.tsx: room for the focus pill above and below the buttons */
+.sb-btn { position: relative; width: 36px; height: 36px; border: 0; border-radius: 12px; background: transparent; color: inherit; display: grid; place-items: center; cursor: pointer; flex: none; }
+.sb-btn:hover { background: color-mix(in srgb, var(--sb-text) 12%, transparent); }
+.sb-btn img { width: 17px; height: 17px; object-fit: contain; }
+/* The Bloom button's picture is always a circle, whatever image it is. */
+.sb-start img { border-radius: 50%; object-fit: cover; opacity: var(--sb-start-op, 1); }
+/* The Bloom button has no hover highlight; its picture grows a little instead (with a small overshoot, like the popups). */
+.sb-start:hover { background: transparent; }
+.sb-start > img, .sb-start > svg, .sb-start > .sb-eye { transform: scale(var(--sb-start-grow, 1)); transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.sb-start:hover { --sb-start-grow: 1.2; }
+.sb-start:active { --sb-start-grow: 1.08; }
+.sb-start .sb-eye { width: 27px; height: 27px; background: currentColor; opacity: var(--sb-start-op, 0.7); translate: var(--eye-dx, 0px) var(--eye-dy, 0px); -webkit-mask: url(/bloom-eye-mask.png) center / contain no-repeat; mask: url(/bloom-eye-mask.png) center / contain no-repeat; } /* the eye drawn in the bar's text colour (pywal), like the recycle icon. Nudge it with --eye-dx / --eye-dy if it still looks off */
+.sb-start .sb-recycle { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; opacity: var(--sb-start-op, 0.95); }
+/* The focus drop: solid, in the pywal accent (Bloom's --bloom-accent follows the wallpaper). It lives in the
+   app list, behind the buttons, and is sized and moved by the script (top / height / scaleX). */
+.sb-apps { position: relative; }
+.sb-root { /* the colour of the focus drop: the same pywal text colour as the bar's icons and clock */
+	--sb-focus: var(--sb-text);
+}
+.sb-focus { position: absolute; left: 0; width: 32px; /* = DOT_W in Sidebar.tsx */ z-index: 0; border-radius: 999px; background: var(--sb-focus); pointer-events: none; will-change: top, height, transform; }
+.sb-btn.live { z-index: 1; }
+/* The focused app's icon pops up a little, with a bounce of its own (a small one). */
+.sb-btn.live img, .sb-btn.live .sb-glyph { transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), color 0.2s, opacity 0.3s ease; }
+.sb-btn.live.focused img, .sb-btn.live.focused .sb-glyph { transform: scale(1.08); }
+/* Line icons that stand in for tile-style app icons (see APP_GLYPHS in Sidebar.tsx). */
+.sb-glyph { display: block; opacity: 0.92; }
+.sb-btn.live.focused .sb-glyph { opacity: 1; color: var(--sb-surface); } /* line icons turn to the bar colour so they stay readable on the solid drop */
+.sb-btn.live.focused > span { color: var(--sb-surface); } /* the same for the letter of an app without an icon */
+.sb-sep { width: 20px; height: 1px; flex: none; background: color-mix(in srgb, var(--sb-text) 18%, transparent); }
+.sb-clock { display: flex; flex-direction: column; align-items: center; font-family: var(--sb-mono); font-size: 13px; font-weight: 400; line-height: 1.1; padding: 4px 0 2px; opacity: 0.9; perspective: 400px; cursor: pointer; transition: opacity 0.15s; }
+.sb-clock:hover { opacity: 1; }
+.sb-clock > div { display: flex; flex-direction: column; align-items: center; }
+/* The Time gun's countdown in the clock's place. The dot sits in the clock's top padding, so nothing moves. */
+.sb-timer { position: relative; font-variant-numeric: tabular-nums; }
+.sb-timer-dot { position: absolute; top: -5px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--dot, #ff453a); }
+.sb-timer.run .sb-timer-dot { animation: sb-timer-pulse 1.6s ease-in-out infinite; }
+.sb-timer.pause span, .sb-timer.pause .sb-timer-dot { opacity: 0.5; }
+@keyframes sb-timer-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ------------------------------------------------------------------ bottom status icons */
+.sb-tray { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: none; }
+.sb-status { width: 32px; height: 32px; border-radius: 10px; opacity: 0.55; transition: opacity 0.15s, background 0.15s; }
+.sb-status.on { opacity: 0.95; }
+.sb-status:hover, .sb-status.open { opacity: 1; }
+.sb-status.open { background: color-mix(in srgb, var(--sb-text) 16%, transparent); }
+.sb-traybtn { cursor: pointer; }
+.sb-trayicon { display: grid; place-items: center; }
+
+/* ------------------------------------------------------------------ popup that grows out of the bar */
+/* Stacking: scrim (click outside to close) < bar < popup. */
+.sb-scrim { position: absolute; inset: 0; pointer-events: auto; z-index: 1; }
+.sb-bar { z-index: 2; }
+/* The box. Its width, height and top are animated by the script (the notch's springs); it only has to sit on
+   the bar's inner edge. Visible overflow, so the curved joins can stick out above and below it. */
+.sb-pwrap { position: absolute; z-index: 3; pointer-events: none; box-sizing: border-box; }
+/* The surface clips the content, which keeps its full size and is revealed as the box opens. */
+.sb-pbody { position: absolute; inset: 0; overflow: hidden; pointer-events: auto; background: var(--sb-surface); color: var(--sb-text); }
+.sb-root.left .sb-pbody { border-radius: 0 var(--sb-fillet) var(--sb-fillet) 0; }
+.sb-root.right .sb-pbody { border-radius: var(--sb-fillet) 0 0 var(--sb-fillet); }
+.sb-pcontent { position: absolute; top: 0; box-sizing: border-box; }
+/* Concave joins where the popup meets the bar, above and below it (same surface, same technique as .sb-fillet). */
+.sb-pfillet { position: absolute; width: var(--sb-fillet); height: var(--sb-fillet); pointer-events: none; }
+.sb-pfillet.top { top: calc(-1 * var(--sb-fillet)); } .sb-pfillet.bottom { bottom: calc(-1 * var(--sb-fillet)); }
+.sb-root.left .sb-pfillet { left: 0; } .sb-root.right .sb-pfillet { right: 0; }
+.sb-root.left .sb-pfillet.top { background: radial-gradient(circle at 100% 0, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.left .sb-pfillet.bottom { background: radial-gradient(circle at 100% 100%, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.right .sb-pfillet.top { background: radial-gradient(circle at 0 0, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.right .sb-pfillet.bottom { background: radial-gradient(circle at 0 100%, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+/* The Wi-Fi / Bluetooth views were made to sit under the notch's 36px strip; here they fill the popup. */
+.sb-pcontent .qp { top: 0; height: 100%; border-radius: 0; padding-top: 10px; }
+
+/* ------------------------------------------------------------------ volume popup */
+.sb-vol { height: 100%; box-sizing: border-box; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; scrollbar-width: none; font-size: 11px; }
+.sb-vol-title { font-size: 12px; font-weight: 600; flex: none; }
+.sb-vol-row { display: flex; align-items: center; gap: 8px; flex: none; height: 32px; }
+.sb-vol-row.muted { opacity: 0.5; }
+.sb-vol-name { width: 32px; flex: none; opacity: 0.75; }
+.sb-vol-row input[type="range"] { flex: 1; min-width: 0; accent-color: var(--bloom-accent, currentColor); }
+.sb-vol-pct { width: 24px; text-align: right; flex: none; opacity: 0.75; font-variant-numeric: tabular-nums; }
+/* ------------------------------------------------------------------ power popup (right-click on the Bloom button) */
+.sb-pow { height: 100%; box-sizing: border-box; padding: 10px 8px; display: flex; flex-direction: column; gap: 3px; overflow-y: auto; scrollbar-width: none; font-size: 12px; }
+.sb-pow-row { flex: none; height: 32px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.sb-pow-row:hover { background: color-mix(in srgb, var(--sb-text) 12%, transparent); }
+.sb-pow-row.danger:hover { background: color-mix(in srgb, #ff453a 22%, transparent); color: #ff6961; }
+/* Title of the right-click menu on an app button (height = MENU_TITLE in Sidebar.tsx). */
+.sb-menu-title { flex: none; height: 26px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 11px; font-weight: 600; opacity: 0.6; }
+.sb-menu-title img { width: 16px; height: 16px; flex: none; object-fit: contain; }
+.sb-menu-title span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ------------------------------------------------------------------ window picker (click an app with several windows) */
+.sb-win { height: 100%; box-sizing: border-box; padding: 10px 8px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; } /* padding / gap / row height = WIN_PAD / WIN_GAP / WIN_ROW in Sidebar.tsx */
+.sb-win-list { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; scrollbar-width: none; }
+.sb-win-row { flex: none; height: 76px; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 8px; border: 0; border-radius: 12px; background: transparent; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.sb-win-row { outline: none; }
+.sb-win-row:hover, .sb-win-row:focus-visible { background: color-mix(in srgb, var(--sb-text) 12%, transparent); }
+.sb-win-row.cur { background: color-mix(in srgb, var(--sb-text) 18%, transparent); }
+.sb-win-thumb { flex: none; width: 112px; height: 62px; border-radius: 8px; overflow: hidden; display: grid; place-items: center; background: color-mix(in srgb, var(--sb-text) 8%, transparent); }
+.sb-win-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sb-win-thumb img.ico { width: 28px; height: 28px; opacity: 0.8; }
+/* The small X on a window row closes that window. Shown on hover; always shown after a right-click on the app (close mode). */
+.sb-win-x { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: transparent; color: inherit; cursor: pointer; opacity: 0; transition: opacity 0.12s, background 0.12s, color 0.12s; }
+.sb-win-row:hover .sb-win-x, .sb-win-row:focus-visible .sb-win-x, .sb-win.closing-mode .sb-win-x { opacity: 0.65; }
+.sb-win-x:hover { opacity: 1 !important; background: color-mix(in srgb, #ff453a 28%, transparent); color: #ff6961; }
+.sb-win.closing-mode .sb-win-row:hover { background: color-mix(in srgb, #ff453a 18%, transparent); }
+.sb-win-title { flex: 1; min-width: 0; font-size: 12px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+.sb-vol-sep { height: 1px; flex: none; background: color-mix(in srgb, var(--sb-text) 14%, transparent); }
+.sb-vol-app { width: 32px; height: 32px; flex: none; border: 0; border-radius: 10px; background: transparent; color: inherit; display: grid; place-items: center; cursor: pointer; }
+.sb-vol-app:hover { background: color-mix(in srgb, var(--sb-text) 12%, transparent); }
+.sb-vol-app img { width: 20px; height: 20px; object-fit: contain; }
+
+/* ------------------------------------------------------------------ adaptive light + retro theme: outline
+   A thin line (--bloom-outline, set by theme.ts) runs along the inner edge of the frame: the bar's
+   inner side, the curved joins, and the popup's free sides. The line stops where two pieces join, so
+   the bar, strips and popup read as one shape. --sb-ow must equal OW in SidebarFrame.tsx. */
+:is(.theme-light, .theme-retro) .sb-root {
+	--sb-ow: 2px;
+	--sb-outline: var(--bloom-outline, rgba(0, 0, 0, 0.4));
+	/* The arc of a join, as a line only: the surface of the join is drawn as before. */
+	--sb-ring: transparent calc(var(--sb-fillet) - 0.5px), var(--sb-outline) var(--sb-fillet),
+		var(--sb-outline) calc(var(--sb-fillet) + var(--sb-ow)), transparent calc(var(--sb-fillet) + var(--sb-ow) + 0.5px);
+}
+/* The line is a separate layer one line-width bigger on every side. Right at the two ends of an arc
+   the line lies just outside the join's own box, which is where it used to get cut off. */
+/* The bar (z-index 2) would hide the end of the line where the arc overlaps its edge, so the joins sit above it. */
+:is(.theme-light, .theme-retro) .sb-fillet { z-index: 3; }
+:is(.theme-light, .theme-retro) .sb-fillet::after,
+:is(.theme-light, .theme-retro) .sb-pfillet::after { content: ""; position: absolute; inset: calc(-1 * var(--sb-ow)); pointer-events: none; }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-fillet.top::after { background: radial-gradient(circle at calc(100% - var(--sb-ow)) calc(100% - var(--sb-ow)), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-fillet.bottom::after { background: radial-gradient(circle at calc(100% - var(--sb-ow)) var(--sb-ow), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-fillet.top::after { background: radial-gradient(circle at var(--sb-ow) calc(100% - var(--sb-ow)), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-fillet.bottom::after { background: radial-gradient(circle at var(--sb-ow) var(--sb-ow), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-pfillet.top::after { background: radial-gradient(circle at calc(100% - var(--sb-ow)) var(--sb-ow), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-pfillet.bottom::after { background: radial-gradient(circle at calc(100% - var(--sb-ow)) calc(100% - var(--sb-ow)), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-pfillet.top::after { background: radial-gradient(circle at var(--sb-ow) var(--sb-ow), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-pfillet.bottom::after { background: radial-gradient(circle at var(--sb-ow) calc(100% - var(--sb-ow)), var(--sb-ring)); }
+/* The bar's inner edge, between the two joins. */
+:is(.theme-light, .theme-retro) .sb-root:not(.m-peek) .sb-bar::after { content: ""; position: absolute; top: var(--sb-fillet); bottom: var(--sb-fillet); width: var(--sb-ow); background: var(--sb-outline); pointer-events: none; }
+:is(.theme-light, .theme-retro) .sb-root.left:not(.m-peek) .sb-bar::after { right: 0; }
+:is(.theme-light, .theme-retro) .sb-root.right:not(.m-peek) .sb-bar::after { left: 0; }
+/* Peek has no frame: the bar is a free piece, outlined on its three free sides. */
+:is(.theme-light, .theme-retro) .sb-root.m-peek.left .sb-bar { border: var(--sb-ow) solid var(--sb-outline); border-left: 0; }
+:is(.theme-light, .theme-retro) .sb-root.m-peek.right .sb-bar { border: var(--sb-ow) solid var(--sb-outline); border-right: 0; }
+/* Popup: outlined on the three sides away from the bar. It reaches one line-width over the bar's
+   edge and a strip of surface covers the bar's line where the two are joined. */
+:is(.theme-light, .theme-retro) .sb-pbody { box-sizing: border-box; border: var(--sb-ow) solid var(--sb-outline); }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-pbody { border-left: 0; left: calc(-1 * var(--sb-ow)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-pbody { border-right: 0; right: calc(-1 * var(--sb-ow)); }
+:is(.theme-light, .theme-retro) .sb-pshell::before { content: ""; position: absolute; top: 0; bottom: 0; width: var(--sb-ow); background: var(--sb-surface); }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-pshell::before { left: calc(-1 * var(--sb-ow)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-pshell::before { right: calc(-1 * var(--sb-ow)); }
+/* Popup outline, drawn on the box (which does not clip) instead of as .sb-pbody's own border, so it can stop where
+   the curved joins start. The old border ran straight across both joins and closed them into square corners.
+   The popup keeps a transparent border of the same width, so the content does not move. The mask hides the
+   line over the first --sb-fillet + --sb-ow pixels from the bar: from there on the join's own arc carries the line. */
+:is(.theme-light, .theme-retro) .sb-pwrap:not(.sb-ov) .sb-pbody { border-color: transparent; }
+/* The bar's own line is covered over the popup and its two joins (one fillet above and below), so no stub of it is
+   left between the arcs. The arcs sit above this strip (z-index 1) and carry the line round the corner. */
+:is(.theme-light, .theme-retro) .sb-pwrap:not(.sb-ov)::before { content: ""; position: absolute; top: calc(-1 * var(--sb-fillet)); bottom: calc(-1 * var(--sb-fillet)); width: var(--sb-ow); background: var(--sb-surface); pointer-events: none; }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-pwrap:not(.sb-ov)::before { left: calc(-1 * var(--sb-ow)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-pwrap:not(.sb-ov)::before { right: calc(-1 * var(--sb-ow)); }
+:is(.theme-light, .theme-retro) .sb-pwrap:not(.sb-ov) .sb-pfillet { z-index: 1; } /* above the body, so the arc's last 2px reach the line */
+:is(.theme-light, .theme-retro) .sb-pwrap:not(.sb-ov)::after { content: ""; position: absolute; top: 0; bottom: 0; box-sizing: border-box; border: var(--sb-ow) solid var(--sb-outline); pointer-events: none; }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-pwrap:not(.sb-ov)::after { left: calc(-1 * var(--sb-ow)); right: 0; border-left: 0; border-radius: 0 var(--sb-fillet) var(--sb-fillet) 0; -webkit-mask-image: linear-gradient(to right, transparent calc(var(--sb-fillet) + var(--sb-ow) * 2), #000 calc(var(--sb-fillet) + var(--sb-ow) * 2)); mask-image: linear-gradient(to right, transparent calc(var(--sb-fillet) + var(--sb-ow) * 2), #000 calc(var(--sb-fillet) + var(--sb-ow) * 2)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-pwrap:not(.sb-ov)::after { right: calc(-1 * var(--sb-ow)); left: 0; border-right: 0; border-radius: var(--sb-fillet) 0 0 var(--sb-fillet); -webkit-mask-image: linear-gradient(to left, transparent calc(var(--sb-fillet) + var(--sb-ow) * 2), #000 calc(var(--sb-fillet) + var(--sb-ow) * 2)); mask-image: linear-gradient(to left, transparent calc(var(--sb-fillet) + var(--sb-ow) * 2), #000 calc(var(--sb-fillet) + var(--sb-ow) * 2)); }
+
+/* ------------------------------------------------------------------ power menu (right-click on the Bloom button) */
+/* The bar window covers the monitor while it is open (sidebar_set_overlay): the screen is dimmed (the bar stays above the
+   dim) and a slim column of icon buttons grows out of the screen edge farthest from the bar, centred vertically. */
+/* Only the wallpaper / desktop part is dimmed: the bar, the frame strips (top, bottom, far side) and the joins stay as they are. */
+.sb-dim { position: absolute; top: var(--sb-strip); bottom: var(--sb-strip); left: var(--sb-strip); right: var(--sb-strip); z-index: 1; pointer-events: auto; background: rgba(0, 0, 0, 0.42); }
+.sb-root.left .sb-dim { left: var(--sb-bar-w); }
+.sb-root.right .sb-dim { right: var(--sb-bar-w); }
+.sb-root.m-peek .sb-dim { inset: 0; } /* peek has no frame */
+.sb-fillet { z-index: 2; } /* the joins stay above the dim */
+/* The popup box is attached to the far screen edge, so its rounded side and its curved joins are mirrored. */
+.sb-root.left .sb-ov .sb-pbody { border-radius: var(--sb-fillet) 0 0 var(--sb-fillet); }
+.sb-root.right .sb-ov .sb-pbody { border-radius: 0 var(--sb-fillet) var(--sb-fillet) 0; }
+.sb-root.left .sb-ov .sb-pfillet { left: auto; right: 0; }
+.sb-root.right .sb-ov .sb-pfillet { right: auto; left: 0; }
+.sb-root.left .sb-ov .sb-pfillet.top { background: radial-gradient(circle at 0 0, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.left .sb-ov .sb-pfillet.bottom { background: radial-gradient(circle at 0 100%, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.right .sb-ov .sb-pfillet.top { background: radial-gradient(circle at 100% 0, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-root.right .sb-ov .sb-pfillet.bottom { background: radial-gradient(circle at 100% 100%, transparent calc(var(--sb-fillet) - 0.5px), var(--sb-surface) var(--sb-fillet)); }
+.sb-ov-col { height: 100%; box-sizing: border-box; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; } /* padding / gap / button = OV_PAD / OV_GAP / OV_BTN in Sidebar.tsx */
+.sb-ov-btn { flex: none; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 12px; display: grid; place-items: center; background: transparent; color: inherit; cursor: pointer; transition: background 0.12s, color 0.12s; }
+.sb-ov-btn:hover, .sb-ov-btn:focus-visible { outline: none; background: color-mix(in srgb, var(--sb-text) 14%, transparent); }
+.sb-ov-btn.danger:hover, .sb-ov-btn.danger:focus-visible { background: color-mix(in srgb, #ff453a 24%, transparent); color: #ff6961; }
+/* Light theme: the outline runs along the three sides away from the screen edge, the joins' lines are mirrored too. */
+:is(.theme-light, .theme-retro) .sb-root.left .sb-ov .sb-pbody { border: var(--sb-ow) solid var(--sb-outline); border-right: 0; left: 0; right: 0; }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-ov .sb-pbody { border: var(--sb-ow) solid var(--sb-outline); border-left: 0; left: 0; right: 0; }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-ov .sb-pfillet.top::after { background: radial-gradient(circle at var(--sb-ow) var(--sb-ow), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.left .sb-ov .sb-pfillet.bottom::after { background: radial-gradient(circle at var(--sb-ow) calc(100% - var(--sb-ow)), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-ov .sb-pfillet.top::after { background: radial-gradient(circle at calc(100% - var(--sb-ow)) var(--sb-ow), var(--sb-ring)); }
+:is(.theme-light, .theme-retro) .sb-root.right .sb-ov .sb-pfillet.bottom::after { background: radial-gradient(circle at calc(100% - var(--sb-ow)) calc(100% - var(--sb-ow)), var(--sb-ring)); }
+
+/* ------------------------------------------------------------------ Time gun popup (click on the clock) */
+/* TimeGun draws itself (it imports its own styles); its panel normally sits 36px down in the notch, here it fills the box. */
+.sb-tg { position: relative; width: 100%; height: 100%; }
+.sb-tg .tg-panel { top: 0; height: 100%; }
+
+/* ------------------------------------------------------------------ Controls popup (right-click on the clock) */
+/* Heights add up to POPUP_H.controls in Sidebar.tsx: 12 + 58 + 10 + (28 + 4 + 28) + 10 + 36 + 12 */
+.sb-ctl { height: 100%; box-sizing: border-box; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; font-size: 11px; }
+.sb-ctl-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex: none; }
+.sb-ctl-tile { height: 58px; min-width: 0; padding: 0 4px; border: 0; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: color-mix(in srgb, var(--sb-text) 9%, transparent); color: inherit; font: inherit; cursor: pointer; transition: background 0.12s; }
+.sb-ctl-tile:hover { background: color-mix(in srgb, var(--sb-text) 16%, transparent); }
+.sb-ctl-tile.on { background: color-mix(in srgb, var(--bloom-accent, var(--sb-text)) 32%, transparent); }
+.sb-ctl-tile b { font-weight: 600; font-size: 11px; }
+.sb-ctl-tile small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9.5px; opacity: 0.7; }
+.sb-ctl-sliders { display: flex; flex-direction: column; gap: 4px; flex: none; }
+.sb-ctl-row { display: flex; align-items: center; gap: 8px; height: 28px; }
+.sb-ctl-row svg { flex: none; opacity: 0.8; }
+.sb-ctl-row input[type="range"] { flex: 1; min-width: 0; accent-color: var(--bloom-accent, currentColor); }
+.sb-ctl-btns { display: flex; justify-content: space-between; flex: none; }
+.sb-ctl-btn { width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--sb-text) 9%, transparent); color: inherit; cursor: pointer; transition: background 0.12s; }
+.sb-ctl-btn:hover { background: color-mix(in srgb, var(--sb-text) 18%, transparent); }
+.sb-ctl { position: relative; }
+.sb-ctl-btn.on { background: color-mix(in srgb, var(--bloom-accent, var(--sb-text)) 32%, transparent); }
+/* Sheets over the Controls popup: Sound Output and Text Color (same idea as the notch's .cc-audio-sheet) */
+.sb-sheet { position: absolute; inset: 0; z-index: 3; box-sizing: border-box; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; background: var(--sb-surface); color: var(--sb-text); }
+.sb-sheet-head { display: flex; align-items: center; justify-content: space-between; flex: none; font-size: 12px; font-weight: 600; }
+.sb-sheet-close { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--sb-text) 9%, transparent); color: inherit; cursor: pointer; }
+.sb-sheet-close:hover { background: color-mix(in srgb, var(--sb-text) 18%, transparent); }
+.sb-sheet-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; scrollbar-width: none; }
+.sb-sheet-list::-webkit-scrollbar { display: none; }
+.sb-sheet-empty { margin: auto; opacity: 0.6; font-size: 11px; }
+.sb-sheet-item { flex: none; height: 32px; padding: 0 10px; border: 0; border-radius: 10px; display: flex; align-items: center; gap: 8px; background: color-mix(in srgb, var(--sb-text) 7%, transparent); color: inherit; font: inherit; font-size: 11.5px; text-align: left; cursor: pointer; }
+.sb-sheet-item:hover { background: color-mix(in srgb, var(--sb-text) 14%, transparent); }
+.sb-sheet-item.on { background: color-mix(in srgb, var(--bloom-accent, var(--sb-text)) 28%, transparent); }
+.sb-sheet-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-tc { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.sb-tc-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.sb-tc-sv { position: relative; flex: 1; min-height: 0; border-radius: 10px; cursor: crosshair; touch-action: none; }
+.sb-tc-knob { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5); pointer-events: none; }
+.sb-tc-hue { flex: none; width: 100%; height: 10px; margin: 0; appearance: none; -webkit-appearance: none; border-radius: 999px; background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); outline: none; }
+.sb-tc-hue::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid rgba(0, 0, 0, 0.45); cursor: pointer; }
+.sb-tc-right { width: 84px; flex: none; display: flex; flex-direction: column; gap: 8px; }
+.sb-tc-swatch { flex: 1; min-height: 0; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--sb-text) 25%, transparent); }
+.sb-tc-hex { flex: none; width: 100%; box-sizing: border-box; height: 28px; padding: 0 8px; border: 0; border-radius: 8px; background: color-mix(in srgb, var(--sb-text) 10%, transparent); color: inherit; font: inherit; font-size: 11.5px; text-align: center; outline: none; }
+.sb-tc-auto { flex: none; height: 26px; border: 0; border-radius: 8px; background: color-mix(in srgb, var(--sb-text) 9%, transparent); color: inherit; font: inherit; font-size: 11px; cursor: pointer; }
+.sb-tc-auto:hover { background: color-mix(in srgb, var(--sb-text) 18%, transparent); }
+.sb-tc-auto.on { background: color-mix(in srgb, var(--bloom-accent, var(--sb-text)) 32%, transparent); }
+
+/* Controls popup in the old notch layout: 2-column pills, round buttons, fat sliders (350 x 230, POPUP_W / POPUP_H.controls) */
+.sb-ctl { padding: 14px 16px; gap: 10px; }
+.sb-cc-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: none; }
+.sb-cc-wide { grid-column: 1 / -1; }
+.sb-cc-pill { height: 38px; min-width: 0; padding: 0 10px; box-sizing: border-box; border-radius: 12px; display: flex; align-items: center; gap: 8px; background: color-mix(in srgb, var(--sb-text) 9%, transparent); color: var(--sb-text); cursor: pointer; transition: background 0.15s, color 0.15s; user-select: none; }
+.sb-cc-pill:hover { background: color-mix(in srgb, var(--sb-text) 15%, transparent); }
+.sb-cc-pill.active { background: var(--sb-text); color: var(--sb-surface); }
+.sb-cc-pill-icon { flex: none; display: grid; place-items: center; }
+.sb-cc-pill-info { min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+.sb-cc-pill-title { font-size: 11px; font-weight: 600; }
+.sb-cc-pill-status { font-size: 8.5px; font-weight: 500; opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-cc-pill-more { margin-left: auto; width: 18px; height: 18px; padding: 0; flex: none; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: inherit; opacity: 0.55; cursor: pointer; transition: opacity 0.15s, background 0.15s; }
+.sb-cc-pill-more:hover { opacity: 1; background: color-mix(in srgb, currentColor 14%, transparent); }
+.sb-cc-pill-more svg { width: 12px; height: 12px; }
+.sb-cc-actions { display: flex; justify-content: space-between; flex: none; }
+.sb-cc-btn { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--sb-text) 9%, transparent); color: var(--sb-text); cursor: pointer; transition: background 0.15s, color 0.15s; }
+.sb-cc-btn:hover { background: color-mix(in srgb, var(--sb-text) 18%, transparent); }
+.sb-cc-btn.active { background: var(--sb-text); color: var(--sb-surface); }
+.sb-cc-sliders { display: flex; flex-direction: column; gap: 8px; flex: none; }
+.sb-cc-row { display: flex; align-items: center; gap: 8px; height: 22px; }
+.sb-cc-label { width: 74px; flex: none; display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 500; opacity: 0.85; }
+.sb-cc-track { position: relative; flex: 1; min-width: 0; height: 14px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--sb-text) 14%, transparent); }
+.sb-cc-track input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 2; }
+.sb-cc-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--sb-text); pointer-events: none; }
+.sb-cc-pct { width: 32px; flex: none; text-align: right; font-size: 10px; font-variant-numeric: tabular-nums; opacity: 0.8; }
+.sb-cc-pill.locked { cursor: not-allowed; }
+.sb-cc-pill.locked:hover { background: color-mix(in srgb, var(--sb-text) 9%, transparent); }
+.sb-cc-pill.locked > :not(.sb-cc-lock) { opacity: 0.55; }
+.sb-cc-lock { margin-left: auto; width: 18px; height: 18px; flex: none; display: grid; place-items: center; opacity: 0.8; }
+
+/* ------------------------------------------------------------------ apps grouped by workspace (komorebi) */
+/* Each workspace that has windows is a rounded group around its app icons, the focused workspace's a little stronger;
+   an empty workspace is a small dot, and the focused empty one a filled circle with a dot in it. */
+.sb-wsg { flex: none; width: 44px; box-sizing: border-box; padding: 4px 0; border-radius: 22px; /* half the width: fully round ends */ display: flex; flex-direction: column; align-items: center; gap: 4px; background: color-mix(in srgb, var(--sb-text) 8%, transparent); transition: background 0.2s; cursor: default; }
+.sb-wsg.active { background: color-mix(in srgb, var(--sb-text) 16%, transparent); }
+.sb-wsg.loose { background: transparent; padding: 0; }
+.sb-wsdot { flex: none; width: 44px; height: 32px; padding: 0; border: 0; background: transparent; color: inherit; display: grid; place-items: center; cursor: pointer; }
+.sb-wsdot i { width: 6px; height: 6px; border-radius: 50%; background: var(--sb-text); opacity: 0; /* hidden until hovered or a dragged app is over it */ transition: width 0.2s, height 0.2s, opacity 0.2s, background 0.2s; }
+.sb-wsdot:hover i { opacity: 0.7; }
+.sb-wsdot.active i { width: 22px; height: 22px; opacity: 1; background: radial-gradient(circle, var(--sb-surface) 0 3px, var(--sb-focus) 3.5px); }
+/* The second monitor's workspaces: a second list above the tray. */
+.sb-apps { flex: 1 1 0; }
+.sb-apps:not(.sb-apps2) { padding-bottom: 9px; } /* 2px like the other list + 7px: the bar has 3px of padding on top and 10px below, so the top list gets 7px more room to keep the media space in the middle of the screen */ /* both lists get the same room (what the top block, the media space and the bottom block leave, split in two), so the media space in between is centred; a longer list scrolls */
+.sb-apps.sb-apps2 { max-height: none; }
+.sb-apps2 > .sb-focus + * { margin-top: auto; } /* the second list rests on the divider above the tray */
+/* The free space between the two lists (room for the media widget): it takes whatever the lists leave. */
+.sb-mid { flex: 0 1 var(--sb-media-h, 230px); min-height: 120px; width: 100%; display: flex; flex-direction: column; align-items: center; }
+/* A minimized window keeps its place in its workspace's group, a little dimmer. */
+.sb-btn.live > span { transition: opacity 0.3s ease; } /* the letter shown for an app without an icon */
+.sb-btn.live.min > * { opacity: 0.5; }
+/* How many windows the app has in this group (shown from two). The ring in the bar colour keeps it readable on the focus pill and the group. */
+.sb-count { position: absolute; right: -1px; bottom: -1px; min-width: 14px; height: 14px; padding: 0 3px; box-sizing: border-box; border-radius: 7px; display: grid; place-items: center; font-size: 9px; font-weight: 700; line-height: 1; background: var(--sb-text); color: var(--sb-surface); box-shadow: 0 0 0 2px var(--sb-surface); pointer-events: none; z-index: 2; }
+.sb-focus-2 { transition: top 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.18s; }
+/* Pinned apps (right-click an app > Pin to top): launchers under the Bloom button. The script caps the height at the bottom block (tray + clock); a longer list scrolls. */
+.sb-top { flex: none; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 8px; min-height: 0; } /* Bloom button + pinned frame; Sidebar.tsx sets its height to match the bottom block */
+.sb-pins-room { flex: 1 1 0; min-height: 0; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; } /* the room under the Bloom button; Sidebar.tsx rounds the strip inside it down to whole icons; the strip rests on its divider */
+.sb-pins { flex: none; scroll-snap-type: y mandatory; scroll-padding: 4px 0; width: 44px; box-sizing: border-box; padding: 4px 0; border-radius: 18px; border: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; overflow-y: auto; scrollbar-width: none; }
+.sb-pins::-webkit-scrollbar { display: none; }
+.sb-pin { flex: none; scroll-snap-align: start; }
+/* Window picker: a minimized window is dimmed and tagged. */
+.sb-win-thumb { position: relative; }
+.sb-win-thumb img, .sb-win-title { transition: opacity 0.25s ease; }
+.sb-win-row.min .sb-win-thumb img, .sb-win-row.min .sb-win-title { opacity: 0.5; }
+.sb-win-tag { position: absolute; left: 4px; bottom: 4px; padding: 0 6px; border-radius: 6px; font-size: 9px; font-weight: 700; letter-spacing: 0.02em; line-height: 14px; background: var(--sb-text); color: var(--sb-surface); pointer-events: none; }
+
+/* ------------------------------------------------------------------ media widget (the room between the two lists) */
+/* A pill like YASB's media_now: glass background, fully rounded ends, the cover behind it faded out at both ends. */
+.sb-media { position: relative; isolation: isolate; width: 100%; /* the full width of the bar (--sb-bar-w), so the cover reaches both edges */ height: 100%; box-sizing: border-box; padding: 8px 0; border: 0; border-radius: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; background: transparent; color: inherit; cursor: pointer; outline: none; }
+.sb-media:hover .sb-media-thumb { opacity: 0.6; } /* no box on hover either: the cover just gets a bit stronger */
+.sb-media-thumb { position: absolute; inset: 0; z-index: -1; background-size: cover; background-position: center; opacity: 0.4; transition: opacity 0.2s ease-out; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,0.03) 6%, rgba(0,0,0,0.12) 12%, rgba(0,0,0,0.3) 19%, rgba(0,0,0,0.55) 27%, rgba(0,0,0,0.8) 36%, #000 46%, #000 54%, rgba(0,0,0,0.8) 64%, rgba(0,0,0,0.55) 73%, rgba(0,0,0,0.3) 81%, rgba(0,0,0,0.12) 88%, rgba(0,0,0,0.03) 94%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,0.03) 6%, rgba(0,0,0,0.12) 12%, rgba(0,0,0,0.3) 19%, rgba(0,0,0,0.55) 27%, rgba(0,0,0,0.8) 36%, #000 46%, #000 54%, rgba(0,0,0,0.8) 64%, rgba(0,0,0,0.55) 73%, rgba(0,0,0,0.3) 81%, rgba(0,0,0,0.12) 88%, rgba(0,0,0,0.03) 94%, transparent 100%); } /* eased fade into the top and bottom, full width */
+.sb-media-icon, .sb-media-nav { display: none; } /* leftover rules; the markup no longer has them */
+.sb-media.idle { cursor: pointer; }
+.sb-media.idle .sb-mq { display: none; }
+.sb-media.idle .sb-pill { display: none; }
+/* Playing: a capsule down the middle of the bar. The cover is a small disc at the top (it turns while the music plays), the
+   same picture is blurred behind the whole capsule, the title runs down it, and equalizer bars sit at the bottom. */
+.sb-pill { --sb-mc: var(--retro-accent-deep, var(--bloom-accent, var(--sb-text))); position: relative; isolation: isolate; flex: none; box-sizing: border-box; width: 44px; /* = .sb-wsg */ height: 100%; max-height: 100%; min-height: 0; padding: 6px 0 10px; border-radius: 22px; /* half the width, like .sb-wsg */ background: color-mix(in srgb, var(--sb-text) 8%, transparent); display: flex; flex-direction: column; align-items: center; gap: 6px; overflow: hidden; transition: background 0.2s; }
+.sb-media:hover .sb-pill, .sb-media.play .sb-pill { background: color-mix(in srgb, var(--sb-text) 16%, transparent); } /* the same step as .sb-wsg -> .sb-wsg.active */
+.sb-pill .sb-media-thumb { opacity: 0.3; -webkit-mask-image: none; mask-image: none; }
+.sb-media:hover .sb-pill .sb-media-thumb { opacity: 0.45; }
+.sb-cover { position: relative; flex: none; width: 32px; height: 32px; border-radius: 50%; background-color: color-mix(in srgb, var(--sb-mc) 28%, transparent); background-size: cover; background-position: center; box-shadow: 0 0 0 2px color-mix(in srgb, var(--sb-mc) 70%, transparent); display: grid; place-items: center; color: var(--sb-mc); opacity: 0.8; transition: opacity 0.2s; animation: sb-cover-spin 14s linear infinite; animation-play-state: paused; }
+.sb-cover svg { width: 16px; height: 16px; }
+.sb-cover::after { content: ""; position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--sb-surface); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--sb-mc) 70%, transparent); }
+.sb-media.play .sb-cover { opacity: 1; animation-play-state: running; }
+.sb-pill .sb-mq { flex: 1 1 0; min-height: 0; }
+.sb-eq { flex: none; height: 12px; display: flex; align-items: flex-end; gap: 2px; color: var(--sb-mc); }
+.sb-eq i { display: block; width: 2px; height: 3px; border-radius: 1px; background: currentColor; }
+.sb-media.play .sb-eq i { animation: sb-idle-eq 0.9s ease-in-out infinite; }
+.sb-eq i:nth-child(2) { animation-delay: 0.15s; }
+.sb-eq i:nth-child(3) { animation-delay: 0.3s; }
+.sb-eq i:nth-child(4) { animation-delay: 0.45s; }
+@keyframes sb-cover-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .sb-cover, .sb-media.play .sb-eq i { animation: none; } }
+/* Nothing playing: a quiet placeholder pill instead of an empty gap. A note, "NO MEDIA" running down it like the title does, and
+   flat equalizer bars that wake up on hover. Click still opens the media popup. */
+.sb-idle { flex: none; box-sizing: border-box; width: 44px; /* = .sb-wsg */ max-height: 100%; min-height: 0; padding: 10px 0; border-radius: 999px; border: 1.5px dashed color-mix(in srgb, var(--sb-text) 30%, transparent); display: flex; flex-direction: column; align-items: center; gap: 8px; overflow: hidden; color: color-mix(in srgb, var(--sb-text) 62%, transparent); transition: border-color 0.2s, color 0.2s, background 0.2s; }
+.sb-media.idle:hover .sb-idle, .sb-media.idle:focus-visible .sb-idle { border-color: color-mix(in srgb, var(--bloom-accent, var(--sb-text)) 75%, transparent); color: var(--sb-text); background: color-mix(in srgb, var(--sb-text) 7%, transparent); }
+.sb-idle-note { flex: none; width: 16px; height: 16px; }
+.sb-idle-t { flex: 1 1 0; min-height: 0; display: block; writing-mode: vertical-rl; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--sb-mono); font-size: 11px; font-weight: 700; line-height: 1; letter-spacing: 0.18em; text-transform: uppercase; }
+.sb-idle-bars { flex: none; height: 12px; display: flex; align-items: flex-end; gap: 2px; }
+.sb-idle-bars i { display: block; width: 2px; height: 3px; border-radius: 1px; background: currentColor; }
+.sb-media.idle:hover .sb-idle-bars i { animation: sb-idle-eq 0.9s ease-in-out infinite; }
+.sb-idle-bars i:nth-child(2) { animation-delay: 0.15s; }
+.sb-idle-bars i:nth-child(3) { animation-delay: 0.3s; }
+.sb-idle-bars i:nth-child(4) { animation-delay: 0.45s; }
+@keyframes sb-idle-eq { 0%, 100% { height: 3px; } 50% { height: 12px; } }
+@media (prefers-reduced-motion: reduce) { .sb-media.idle:hover .sb-idle-bars i { animation: none; } }
+.sb-media.art .sb-mq-t { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75); }
+.sb-media.art .sb-media-icon { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)); }
+/* previous / play / next: hidden until the pill is hovered (YASB's controls_hide), then they open out below the text. */
+.sb-media-nav { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; max-height: 0; padding-top: 0; opacity: 0; overflow: hidden; transition: max-height 0.2s ease-out, padding-top 0.2s ease-out, opacity 0.2s ease-out; }
+.sb-media:hover .sb-media-nav, .sb-media:focus-within .sb-media-nav { max-height: 96px; padding-top: 6px; opacity: 1; }
+.sb-media-nav button { width: 28px; height: 24px; padding: 0; border: 0; border-radius: 999px; display: grid; place-items: center; background: transparent; color: inherit; cursor: pointer; transition: background 0.15s, transform 0.12s; }
+.sb-media-nav button:hover { background: color-mix(in srgb, var(--sb-text) 18%, transparent); }
+.sb-media-nav button:active { transform: scale(0.9); }
+.sb-media.play .sb-media-nav .main { background: color-mix(in srgb, var(--bloom-accent, var(--sb-text)) 38%, transparent); }
+/* The title runs down the strip as rotated text. Longer than the strip: it slides up and down (--mq-d is how far, --mq-dur how long). */
+.sb-mq { flex: 1 1 0; min-height: 0; width: 100%; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+.sb-mq.over { align-items: flex-start; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 10px, #000 calc(100% - 10px), transparent 100%); }
+.sb-mq-track { flex: none; display: flex; flex-direction: column; align-items: center; }
+.sb-mq-t { flex: none; writing-mode: vertical-rl; white-space: nowrap; font-family: var(--sb-mono); font-size: 14px; font-weight: 700; line-height: 1; letter-spacing: 0.02em; } /* 14px bold, a bit larger than the 13px of the YASB media label */
+.sb-mq-gap { flex: none; display: block; height: 28px; } /* keep equal to MQ_GAP in Sidebar.tsx */
+/* Keeps running and loops: the track moves up by one title plus the gap, which puts the copy where the title was. */
+.sb-mq.over .sb-mq-track { animation: sb-mq-loop var(--mq-dur, 8s) linear infinite; }
+@keyframes sb-mq-loop { from { transform: translateY(0); } to { transform: translateY(calc(-1 * var(--mq-shift))); } }
+@media (prefers-reduced-motion: reduce) { .sb-mq.over .sb-mq-track { animation: none; } }
+/* The media popup: the dashboard's Media tab, filling the popup's box. */
+.sb-mt { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+/* ------------------------------------------------------------------ Monocraft + the media popup's Sound Output panel */
+/* One place for the font. If Monocraft is not found, the monospace fallbacks are used. */
+.sb-root, .sb-mt { --sb-mono: "Monocraft Nerd Font", "Monocraft", ui-monospace, "Cascadia Mono", Consolas, monospace; }
+/* The panel is the dashboard's own (MediaTab.tsx), see-through and positioned for the notch. In the bar it is redrawn to fill the popup,
+   in the bar's colours and font, like the other popups (same tiles as .sb-ctl-tile). z-index: above the disk and its veil. */
+.sb-mt, .sb-mt button, .sb-mt input { font-family: var(--sb-mono); }
+.sb-mt .dash-power-panel.mt-out-panel { position: absolute; inset: 0; z-index: 200; box-sizing: border-box; width: auto; height: auto; padding: 12px 14px; border-radius: 0; display: flex; flex-direction: column; gap: 10px; background: var(--sb-surface); -webkit-backdrop-filter: none; backdrop-filter: none; color: var(--sb-text); font-family: var(--sb-mono); font-size: 11px; box-shadow: none; }
+.sb-mt .dash-power-head { flex: none; height: 28px; display: flex; align-items: center; gap: 8px; margin: 0; padding: 0; }
+.sb-mt .dash-power-back { flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--sb-text) 9%, transparent); color: inherit; cursor: pointer; transition: background 0.12s; }
+.sb-mt .dash-power-back:hover { background: color-mix(in srgb, var(--sb-text) 18%, transparent); }
+.sb-mt .dash-power-title { font-size: 12px; font-weight: 400; white-space: nowrap; color: inherit; }
+.sb-mt .dash-power-hint { margin-left: auto; font-size: 10px; white-space: nowrap; color: inherit; opacity: 0.6; }
+.sb-mt .mt-out-body { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.sb-mt .mt-out-item { color: inherit; font-family: inherit; background: color-mix(in srgb, var(--sb-text) 9%, transparent); }
+.sb-mt .mt-out-item:hover, .sb-mt .mt-out-item:focus-visible { background: color-mix(in srgb, var(--sb-text) 16%, transparent); }
+.sb-mt .mt-out-item.active, .sb-mt .mt-out-item.active:hover { background: color-mix(in srgb, var(--bloom-accent, var(--sb-text)) 32%, transparent); }
+.sb-mt .mt-out-empty { color: inherit; opacity: 0.6; }
+.sb-mt .mt-mix { border-left-color: color-mix(in srgb, var(--sb-text) 15%, transparent); color: inherit; }
+.sb-mt .mt-mix * { font-family: inherit; }
+
+/* ---- drag and drop (app -> workspace, pinned app -> new place in the strip) */
+body.sb-dragging, body.sb-dragging * { cursor: grabbing !important; user-select: none; }
+.sb-btn.dragging-src { opacity: 0.3; }
+.sb-wsg.drop-over { background: color-mix(in srgb, var(--sb-focus) 28%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--sb-focus) 75%, transparent); }
+.sb-wsdot.drop-over i { width: 22px; height: 22px; opacity: 0.9; background: var(--sb-focus); }
+.sb-pins.dragging { scroll-snap-type: none; }
+.sb-pin.ins-before::before, .sb-pin.ins-after::after { content: ""; position: absolute; left: 4px; right: 4px; height: 3px; border-radius: 2px; background: var(--sb-focus); pointer-events: none; }
+.sb-pin.ins-before::before { top: -5px; }
+.sb-pin:first-child.ins-before::before { top: -3px; }
+.sb-pin.ins-after::after { bottom: -5px; }
+.sb-drag-ghost { position: fixed; left: 0; top: 0; will-change: transform; z-index: 99999; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; pointer-events: none; color: var(--sb-text); background: color-mix(in srgb, var(--sb-surface) 85%, var(--sb-text) 15%); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); transform: scale(1.12); }
+.sb-drag-ghost img { width: 17px; height: 17px; object-fit: contain; }
+
+/* ------------------------------------------------------------------ light + retro: legibility
+   The media title is dark text over the cover art. The dark glow made for dark themes (text-shadow in
+   .sb-media.art above) turns dark text into a smudge, so here the halo is the bar's own paper colour, the
+   cover sits further back, and the small status icons are not faded as far. */
+:is(.theme-light, .theme-retro) .sb-media-thumb { opacity: 0.22; }
+:is(.theme-light, .theme-retro) .sb-media:hover .sb-media-thumb { opacity: 0.34; }
+:is(.theme-light, .theme-retro) .sb-media.art .sb-mq-t { text-shadow: 0 0 3px var(--sb-surface), 0 0 7px var(--sb-surface); }
+:is(.theme-light, .theme-retro) .sb-media.art .sb-media-icon { filter: drop-shadow(0 0 2px var(--sb-surface)); }
+:is(.theme-light, .theme-retro) .sb-status { opacity: 0.8; }
+:is(.theme-light, .theme-retro) .sb-status.on { opacity: 1; }
+:is(.theme-light, .theme-retro) .sb-status:hover, :is(.theme-light, .theme-retro) .sb-status.open { opacity: 1; }
+:is(.theme-light, .theme-retro) .sb-clock { opacity: 1; }

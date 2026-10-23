@@ -1,0 +1,56 @@
+/* ---- Media tab layout with and without a picture ----
+   With a picture the tab is three columns (cover, info, picture) and the stage that holds the
+   cover and the info is invisible to that grid. Without one, the cover and the info become a
+   single group, centred in the tab and scaled to fill it. The scale (--mt-fit) is measured in
+   MediaTab.tsx. */
+.mt-stage {
+	display: contents;
+}
+
+/* The group fills the tab itself and centres what is in it, so it does not depend on the tab
+   switching from the three-column grid to a flex row through a :has() rule. That switch could be
+   missed for a moment after the picture was removed, leaving the layout shifted to one side until
+   something else (like pressing play) made the browser recalculate styles. */
+.mt-stage.solo {
+	position: absolute;
+	inset: 0;
+	/* Above the oscilloscope trace and the backdrop, like the cover is in the three-column layout. */
+	z-index: 3;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 24px;
+	transform: scale(var(--mt-fit, 1));
+	transform-origin: center center;
+	/* The empty parts of the group let clicks through to what is behind. */
+	pointer-events: none;
+}
+
+.mt-stage.solo > * {
+	pointer-events: auto;
+}
+
+.mt-stage.solo > .mt-ring,
+.mt-stage.solo > .mt-info {
+	flex: none;
+}
+
+/* The rings around the end of the progress bar stick out to the right of the info column by
+   about 48px, so shift the group left by half of that (scaled) to centre what you actually see. */
+.mt-stage.solo.has-rings {
+	transform: translateX(calc(-24px * var(--mt-fit, 1))) scale(var(--mt-fit, 1));
+}
+
+/* The button that adds a picture, in the corner, out of the way of the layout. */
+.mt-add-pic {
+	position: absolute;
+	top: 8px;
+	right: 10px;
+	z-index: 6;
+	opacity: 0.55;
+	transition: opacity 0.15s ease;
+}
+
+.mt-add-pic:hover {
+	opacity: 1;
+}

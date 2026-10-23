@@ -1,0 +1,190 @@
+/* The now-playing disk (DashDisk.tsx): a clear floppy with the cover as a square in the middle.
+   Loaded by DashDisk.tsx, after DashboardNowPlaying.css, and written so it works whether or not that
+   file still has the round-record styling: it switches the circle, crop, grooves, shine and spindle
+   hole off. The box is 112px so the title and buttons stay where they were; the disk (79px,
+   --dash-disk-size) is centred in it. */
+.dash-card.dash-media .dash-art,
+.theme-retro .dash-card.dash-media .dash-art {
+	position: relative;
+	width: 112px;
+	height: 112px;
+	flex: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	overflow: visible;
+	background: none;
+	box-shadow: none;
+	color: inherit;
+	filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+}
+
+.theme-retro .dash-card.dash-media .dash-art {
+	filter: drop-shadow(2px 2px 0 var(--retro-ink, #2b2b2b));
+}
+
+.dash-card.dash-media .dash-art::before,
+.dash-card.dash-media .dash-art::after {
+	content: none;
+}
+
+.dash-disk {
+	display: block;
+	flex: none;
+	/* Rasterise once and turn on the GPU, like .mt-disk on the Media tab. */
+	will-change: transform;
+	width: var(--dash-disk-size, 79px);
+	height: var(--dash-disk-size, 79px);
+}
+
+.dash-disk-art {
+	display: block;
+	width: 100%;
+	height: 100%;
+	transition:
+		transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+		opacity 0.3s ease;
+}
+
+.dash-disk-art svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* The yellow floppy (variant 2) on the card: made to fill the same box as the black disk, so the two
+   variants are the same size. On the Media tab .mt-disk does this for both of them. */
+.dash-disk .mt-floppy {
+	width: 100%;
+	height: 100%;
+}
+
+/* On the Media tab the black disk reacts to hovering the cover the way the yellow floppy does
+   (Floppy.css): it grows a little and dims, and its glow copy stays as it is. */
+.mt-art:hover .dash-disk-art,
+.mt-art:focus-visible .dash-disk-art,
+.mt-art.vol .dash-disk-art {
+	transform: scale(1.06);
+	opacity: var(--mt-floppy-hover, 0.85);
+}
+
+.mt-art:hover .mt-disk-glow .dash-disk-art,
+.mt-art:focus-visible .mt-disk-glow .dash-disk-art,
+.mt-art.vol .mt-disk-glow .dash-disk-art {
+	transform: none;
+	opacity: 1;
+}
+
+/* Pywal tint: the warm parts of the disk (disc, wedge, shutter slot, hub) take the hue of the theme
+   accent (--bloom-accent, which follows the wallpaper's pywal palette) instead of the fixed orange of
+   the picture. Each part keeps its own lightness, so the shading still reads, and the colourfulness
+   is capped at what the picture had, so a dull accent gives a muted disk rather than a neon one.
+   --dash-disk-tint is how much of the accent's hue is used: 100% is all of it, 0% is the picture's
+   original colours. The clear case stays neutral. Where the browser cannot do relative colours these
+   rules are skipped and the original colours in DashDisk.tsx stay. */
+@supports (color: oklch(from red l c h)) {
+	.dash-disk-art {
+		--dd-accent: var(--bloom-accent, #ff9f0a);
+		--dd-tint: var(--dash-disk-tint, 85%);
+	}
+
+	.dd-disc {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.686 min(0.075, c) h) var(--dd-tint), #bf8e6e);
+	}
+
+	.dd-wedge {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.816 min(0.036, c) h) var(--dd-tint), #d7bdae);
+	}
+
+	.dd-wedge-line {
+		stroke: color-mix(in oklab, oklch(from var(--dd-accent) 0.785 min(0.066, c) h) var(--dd-tint), #dcae92);
+	}
+
+	.dd-strip {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.678 min(0.069, c) h) var(--dd-tint), #b98d6e);
+	}
+
+	.dd-line {
+		stroke: color-mix(in oklab, oklch(from var(--dd-accent) 0.483 min(0.1, c) h) var(--dd-tint), #8c4a2a);
+	}
+
+	.dd-shutter {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.924 min(0.013, c) h) var(--dd-tint), #ebe5dd);
+	}
+
+	.dd-slot {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.685 min(0.071, c) h) var(--dd-tint), #bc8f6f);
+	}
+
+	.dd-block {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.674 min(0.062, c) h) var(--dd-tint), #b58d72);
+	}
+
+	.dd-slot,
+	.dd-block {
+		stroke: color-mix(in oklab, oklch(from var(--dd-accent) 0.483 min(0.1, c) h) var(--dd-tint), #8c4a2a);
+	}
+
+	.dd-hub {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.73 min(0.155, c) h) var(--dd-tint), #f6844e);
+	}
+
+	.dd-hub-edge {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.457 min(0.119, c) h) var(--dd-tint), #8c3b1c);
+	}
+
+	.dd-hub-ring,
+	.dd-mark-light {
+		stroke: color-mix(in oklab, oklch(from var(--dd-accent) 0.457 min(0.119, c) h) var(--dd-tint), #8c3b1c);
+	}
+
+	.dd-mark-dark {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.416 min(0.126, c) h) var(--dd-tint), #822b0d);
+	}
+
+	/* Lighter than the hub, so the outlined rectangle reads as a pale window in it, as in the picture. */
+	.dd-mark-light {
+		fill: color-mix(in oklab, oklch(from var(--dd-accent) 0.79 min(0.12, c) h) var(--dd-tint), #f39a6e);
+	}
+}
+
+/* On the Media tab the black disk is drawn a little bigger than its box (the yellow floppy is solid,
+   so it looks bigger than the see-through black case at the same size). 1.04 is about 4px on the 110px
+   box; set --dd-media-scale (for example on .mt-root) to 1 for the plain size, or higher for bigger.
+   The glow copy behind it is inside .mt-disk too, so it grows with it. */
+.mt-disk .dash-disk-art svg {
+	transform: scale(var(--dd-media-scale, 1.04));
+}
+
+/* Pivot. The turning happens around the middle of the box, but the hub, the disc and the
+   pivot are all at (50, 50) of the 100x100 picture, so the hub stays put while the disk turns (and
+   grows on hover) around it. --dd-hub-x/-y are
+   CX and CY in DashDisk.tsx as percentages: change them together. The yellow floppy is not matched by
+   :has(> .dash-disk-art), so it keeps turning around its own middle. */
+.mt-disk,
+.dash-disk {
+	--dd-hub-x: 50%;
+	--dd-hub-y: 50%;
+}
+
+.mt-disk:has(> .dash-disk-art),
+.dash-disk:has(> .dash-disk-art),
+.dash-disk-art,
+.mt-disk .dash-disk-art svg {
+	transform-origin: var(--dd-hub-x, 50%) var(--dd-hub-y, 50%);
+}
+
+/* Anchor on the Media tab. The black disk's 110px box is pinned to the exact middle of the cover (.mt-art,
+   which is also the middle of the volume ring), whatever the cover's own size or alignment is, so the
+   hub, which is the middle of the box, is the point the disk turns around. 55px is half of .mt-disk's
+   110px in MediaDisk.css: change both together. The yellow floppy is left as it was. */
+.mt-art > .mt-disk:has(> .dash-disk-art) {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	margin: -55px 0 0 -55px;
+}

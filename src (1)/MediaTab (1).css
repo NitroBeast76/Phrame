@@ -1,0 +1,1062 @@
+/* Media tab of the dashboard: cover with a ring of audio bars, track info, controls, progress. */
+/* Three columns: the cover on the left and the picture on the right take equal space on
+   either side of the info, so the info sits in the middle of the panel and the two sides
+   weigh the same. */
+.mt-root {
+	height: 100%;
+	box-sizing: border-box;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 264px minmax(0, 1fr);
+	align-items: center;
+	column-gap: 14px;
+	padding: 0 8px;
+	position: relative;
+	overflow: hidden;
+}
+
+.mt-empty {
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	gap: 8px;
+	font-size: 12px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.mt-ring {
+	position: relative;
+	justify-self: center;
+	width: 150px;
+	height: 150px;
+}
+
+.mt-art {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 90px;
+	height: 90px;
+	margin: -45px 0 0 -45px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-radius: 50%;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.08));
+}
+
+.mt-art img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.mt-bar-pivot {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 0;
+	height: 0;
+}
+
+.mt-bar {
+	position: absolute;
+	left: -2px;
+	width: 4px;
+	border-radius: 2px;
+	background: var(--bloom-accent, #ff9f0a);
+	/* Height and opacity are animated frame by frame in MediaTab.tsx. */
+	will-change: height, opacity;
+}
+
+.mt-info {
+	position: relative;
+	/* Own stacking context, so the rings can sit behind the text but above the panel. */
+	z-index: 0;
+	width: 264px;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+	text-align: left;
+}
+
+/* Small line on top (artist and album, with the time at its right end). */
+.mt-meta {
+	width: 100%;
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+	min-width: 0;
+}
+
+
+.mt-title {
+	max-width: 100%;
+	font-size: 17px;
+	font-weight: 700;
+	line-height: 1.15;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+
+.mt-artist {
+	flex: 1;
+	min-width: 0;
+	font-size: 10.5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+/* A soft halo in the panel's own colour, so the rings and lines that pass behind the text
+   never make it hard to read. */
+.mt-artist,
+.mt-title,
+.mt-times {
+	text-shadow:
+		0 0 3px var(--notch-bg, var(--bloom-bg-expanded, rgba(0, 0, 0, 0.9))),
+		0 0 6px var(--notch-bg, var(--bloom-bg-expanded, rgba(0, 0, 0, 0.9))),
+		0 0 10px var(--notch-bg, var(--bloom-bg-expanded, rgba(0, 0, 0, 0.9)));
+}
+
+.mt-album-inline {
+	opacity: 0.65;
+}
+
+.mt-controls {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+/* Controls on the left under the bar, chips on the right. */
+.mt-bottom {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.mt-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px;
+	cursor: pointer;
+	color: var(--bloom-text, white);
+	background: transparent;
+	border: none;
+	opacity: 0.85;
+	transition:
+		opacity 0.15s ease,
+		transform 0.15s ease;
+}
+
+.mt-btn:hover {
+	opacity: 1;
+}
+
+.mt-btn:active {
+	transform: scale(0.92);
+}
+
+.mt-btn-main {
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	opacity: 1;
+	border-radius: 50%;
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+/* ---- Progress: a segmented loading-style bar with x markers ---- */
+
+.mt-times {
+	flex-shrink: 0;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	font-variant-numeric: tabular-nums;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.mt-time-now {
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+.mt-xbar {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	/* Pulled left so the first big x lines up with the text and controls. */
+	width: calc(100% + 12px);
+	margin-left: -12px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.mt-x {
+	flex-shrink: 0;
+	opacity: 0.75;
+}
+
+.mt-x.faint {
+	opacity: 0.3;
+}
+
+.mt-line {
+	position: relative;
+	flex: 1;
+	min-width: 0;
+	height: 18px;
+	/* Runs on past the flex gap, into the circle with the x at the end of the bar. The end
+	   circle does not move, the bar just gets 10px longer. */
+	margin-right: -10px;
+}
+
+/* The whole track is one thick, rounded bar (a little darker than the accent, so the white
+   shows up on any theme)... */
+.mt-line-base {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 50%;
+	height: 7px;
+	margin-top: -3.5px;
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 82%, black);
+}
+
+/* ...and the progress is a white fill inside its thickness. */
+.mt-line-fill {
+	position: absolute;
+	left: 2px;
+	top: 50%;
+	height: 3px;
+	margin-top: -1.5px;
+	max-width: calc(100% - 4px);
+	border-radius: 2px;
+	background: rgba(255, 255, 255, 0.95);
+}
+
+/* Playhead: a dot with a small x that turns while the music plays. */
+.mt-head {
+	position: absolute;
+	top: 50%;
+	width: 18px;
+	height: 18px;
+	margin: -9px 0 0 -9px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+}
+
+.mt-head-dot {
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 45%, transparent);
+}
+
+.mt-head-x {
+	position: relative;
+	color: var(--bloom-text, white);
+	animation: mt-spin 4s linear infinite;
+	animation-play-state: paused;
+}
+
+.mt-head.playing .mt-head-x {
+	animation-play-state: running;
+}
+
+.mt-seek {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	cursor: pointer;
+	opacity: 0;
+}
+
+/* ---- Copy button and player name ---- */
+.mt-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.mt-chip {
+	width: 32px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	border: none;
+	border-radius: 9px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.08));
+}
+
+.mt-chip:hover {
+	background: var(--bloom-border, rgba(255, 255, 255, 0.16));
+}
+
+.mt-source {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	max-width: 140px;
+	height: 24px;
+	padding: 0 12px;
+	font-size: 10.5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	border-radius: 12px;
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 26%, transparent);
+}
+
+.mt-source-dot {
+	width: 6px;
+	height: 6px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+/* ---- Spinning: the ring of bars drifts slowly (the cover stays still), only while music
+   plays. ---- */
+@keyframes mt-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes mt-spin-reverse {
+	to {
+		transform: rotate(-360deg);
+	}
+}
+
+.mt-bars-spin {
+	position: absolute;
+	inset: 0;
+	animation: mt-spin-reverse 40s linear infinite;
+	animation-play-state: paused;
+}
+
+.mt-ring.playing .mt-bars-spin {
+	animation-play-state: running;
+}
+
+/* ---- Loading-screen rings around the end of the progress bar. They sit behind the
+   text and are centred on the bar's last x: a thick soft ring (outer radius 60) and a thin
+   circle (radius 95) shifted 35px left, so its right edge touches the ring and its left edge
+   reaches halfway along the bar (130px left of the bar end). ---- */
+.mt-end {
+	position: relative;
+	display: flex;
+	flex-shrink: 0;
+}
+
+.mt-end-art {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 0;
+	height: 0;
+	z-index: -1;
+	pointer-events: none;
+}
+
+.mt-ring-thick {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 120px;
+	height: 120px;
+	margin: -60px 0 0 -60px;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 15%, transparent);
+	-webkit-mask-image: radial-gradient(circle, transparent 41px, #000 42.5px);
+	mask-image: radial-gradient(circle, transparent 41px, #000 42.5px);
+	animation: mt-spin 6s linear infinite;
+	animation-play-state: paused;
+}
+
+/* A brighter arc fading out behind its head, so the ring visibly turns. */
+.mt-ring-thick::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background: conic-gradient(
+		from 0deg,
+		transparent 0 62%,
+		color-mix(in srgb, var(--bloom-accent, #ff9f0a) 40%, transparent) 100%
+	);
+}
+
+.mt-ring-thin {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 190px;
+	height: 190px;
+	margin: -95px 0 0 -130px;
+}
+
+.mt-ring-thin circle {
+	fill: none;
+	stroke: var(--bloom-text, white);
+	stroke-width: 1.2;
+	stroke-linecap: round;
+	opacity: 0.3;
+}
+
+/* A small circle with an x travels around the thin circle (same box as the circle). */
+.mt-orbit {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 190px;
+	height: 190px;
+	margin: -95px 0 0 -130px;
+	animation: mt-spin 24s linear infinite;
+	animation-play-state: paused;
+}
+
+.mt-orbiter {
+	position: absolute;
+	left: 50%;
+	top: 1px;
+	width: 18px;
+	height: 18px;
+	margin: -9px 0 0 -9px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	color: var(--bloom-text, white);
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 45%, transparent);
+	/* Turns the other way at the same speed, so the x stays upright while it travels. */
+	animation: mt-spin-reverse 24s linear infinite;
+	animation-play-state: paused;
+}
+
+.mt-end.playing .mt-ring-thick,
+.mt-end.playing .mt-orbit,
+.mt-end.playing .mt-orbiter {
+	animation-play-state: running;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mt-bars-spin,
+	.mt-ring-thick,
+	.mt-orbit,
+	.mt-orbiter,
+	.mt-head-x {
+		animation: none;
+	}
+}
+
+/* ---- The gif/image beside the rings. It sits at the right end of its column, clear of the
+   rings (which reach about 44px past the info), so the rings fill the space on its left the
+   way the bars fill the left side of the cover. ---- */
+.mt-slot {
+	position: relative;
+	z-index: 1;
+	justify-self: end;
+	width: 104px;
+	height: 104px;
+}
+
+.mt-slot img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+/* Nothing picked yet: a quiet dashed spot, a little brighter on hover. */
+.mt-slot-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+	background: transparent;
+	border: 1.5px dashed var(--bloom-border, rgba(255, 255, 255, 0.18));
+	border-radius: 16px;
+	opacity: 0.55;
+	transition:
+		opacity 0.15s ease,
+		background 0.15s ease;
+}
+
+.mt-slot-empty:hover {
+	opacity: 1;
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+}
+
+/* Change / remove buttons, shown while the pointer is over the picture. */
+.mt-slot-tools {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	display: flex;
+	gap: 4px;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.mt-slot.has-image:hover .mt-slot-tools,
+.mt-slot.has-image:focus-within .mt-slot-tools {
+	opacity: 1;
+}
+
+.mt-slot-btn {
+	width: 20px;
+	height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	color: white;
+	background: rgba(0, 0, 0, 0.6);
+	border: none;
+	border-radius: 50%;
+}
+
+.mt-slot-btn:hover {
+	background: rgba(0, 0, 0, 0.85);
+}
+
+.mt-slot-btn:last-child:hover {
+	background: #ff453a;
+}
+
+/* ---- Backdrop: the shared scope backdrop (drawn by ScopeBackdrop in MediaTab.tsx, styled by
+   DashboardProfile.css) dimmed. ---- */
+
+/* Backdrop strength: 0 (gone) to 1 (same as the Profile tab). Lower it to dim more. */
+.mt-root.dash-pf > .dash-pf-bg {
+	opacity: 0.35;
+	/* Fades in when it is mounted a moment after the tab opens (Smooth Open). */
+	animation: mt-pf-in 0.4s ease-out backwards;
+}
+
+@keyframes mt-pf-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mt-root.dash-pf > .dash-pf-bg {
+		animation: none;
+	}
+}
+
+/* The scan line is off on this tab only (Profile and Windows keep theirs). */
+.mt-root .dash-pf-sweep {
+	display: none;
+}
+
+/* ---- Hard shadow behind the disk on hover: a solid copy of the disk's outline, offset down and to the
+   right, with the disk's own outline cut out of it so only the edge that sticks out shows. It is drawn inside
+   the turning disk, so MediaTab.tsx hands over the offset turned back by the disk's angle
+   (--mt-sx / --mt-sy) and it keeps pointing the same way. Change the distance and colour here. ---- */
+.mt-root {
+	--mt-disk-shadow-x: 6px;
+	--mt-disk-shadow-y: 6px;
+	--mt-disk-shadow: rgba(0, 0, 0, 0.8);
+}
+
+.mt-disk-shadow {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	transform: scale(var(--mt-shadow-scale, 1));
+}
+
+/* Same size as the disk on hover: the black disk is drawn 4% bigger and grows 6% (MediaDisk.css),
+   the yellow floppy only grows 6%. */
+.mt-disk-shadow.case {
+	--mt-shadow-scale: calc(var(--dd-media-scale, 1.04) * 1.06);
+}
+
+.mt-disk-shadow.floppy {
+	--mt-shadow-scale: 1.06;
+}
+
+.mt-disk-shadow svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* The offset is in the picture's own units (the disk is 110px for 100 units, so px * 0.909). */
+.mt-shadow-shape {
+	fill: var(--mt-disk-shadow);
+	transform: translate(calc(var(--mt-sx, 6px) * 0.909), calc(var(--mt-sy, 6px) * 0.909));
+}
+
+.mt-art:hover .mt-disk-shadow,
+.mt-art:focus-visible .mt-disk-shadow,
+.mt-art.vol .mt-disk-shadow {
+	opacity: 1;
+}
+
+/* Real content sits above the artwork (the ring with the bars and the cover), whatever
+   layer order the backdrop uses. */
+.mt-ring {
+	z-index: 3;
+}
+
+/* ---- Sound output panel: press the cover and it replaces the tab, like the dashboard's
+   power panel does (its panel, header and back button styles come from Dashboard.css). ---- */
+.mt-art {
+	cursor: pointer;
+	transition: filter 0.15s ease;
+}
+
+/* Hover: the cover grows a little and dims, and a label fades in over it. */
+.mt-art img {
+	transition:
+		transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+		filter 0.3s ease;
+}
+
+.mt-art:hover img,
+.mt-art:focus-visible img,
+.mt-art.vol img {
+	transform: scale(1.1);
+	filter: brightness(0.4) blur(1.5px);
+}
+
+.mt-art-hint {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	color: var(--bloom-text, white);
+	opacity: 0;
+	transform: scale(0.8);
+	transition:
+		opacity 0.2s ease,
+		transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+	pointer-events: none;
+}
+
+.mt-art:hover .mt-art-hint,
+.mt-art:focus-visible .mt-art-hint,
+.mt-art.vol .mt-art-hint {
+	opacity: 1;
+	transform: scale(1);
+}
+
+/* Volume ring on the cover while scrolling: a faint track with an accent arc that grows from
+   the top, clockwise. */
+.mt-vol-arc {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+	pointer-events: none;
+}
+
+.mt-art.vol .mt-vol-arc {
+	opacity: 1;
+}
+
+.mt-vol-arc circle {
+	fill: none;
+	stroke-width: 3;
+	stroke-linecap: round;
+}
+
+/* The cover behind the ring is always dimmed dark, so the track is light on every theme. */
+.mt-vol-arc-track {
+	stroke: rgba(255, 255, 255, 0.28);
+}
+
+.mt-vol-arc-fill {
+	stroke: var(--bloom-accent, #ff9f0a);
+	transition: stroke-dashoffset 0.12s ease-out;
+}
+
+/* Plain light text in brackets, like the old look: the cover behind it is always dimmed dark, on every theme, so light text
+   is what reads best (theme text colours are dark on light themes like retro). */
+.mt-art-hint-label {
+	font-size: 8.5px;
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	/* The theme accent (so it follows pywal), mixed well towards white so it reads on the cover.
+	   Raise the 42% for more of the accent's colour, lower it for a whiter label. */
+	color: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 42%, white);
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+	/* Where the label sits. With the speaker gone it would be centred on the cover; 22px is where
+	   it used to sit under the speaker, so +27px is 5px lower than that, and -2px is 2px to the
+	   left. Change these two to move it. */
+	transform: translate(-2px, 27px);
+}
+
+/* ---- The label beside the disk, drawn on the notch (MediaTab.tsx) so it sits above the veil. Same
+   look as the old output text. --mt-out-dx / --mt-out-dy move it from the disk's centre (124px
+   right is well clear of the disk's corners as it turns); set them on .mt-root to nudge it. The
+   percentage uses exactly the same style as the label. ---- */
+.mt-veil-out {
+	position: absolute;
+	z-index: 101;
+	height: 18px;
+	margin-top: -9px;
+	display: grid;
+	align-items: center;
+	justify-items: center;
+	pointer-events: none;
+}
+
+/* The label, its invisible copy and the percentage all share one cell, so the box is as wide as
+   the label and the percentage is centred in it. */
+.mt-veil-out > * {
+	grid-area: 1 / 1;
+}
+
+.mt-veil-out-ghost {
+	visibility: hidden;
+}
+
+.mt-veil-out-text {
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 42%, white);
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* The percentage keeps the label's style; only the digits are made equal width so they do not
+   jiggle while the number changes. */
+.mt-veil-out-text.level {
+	font-variant-numeric: tabular-nums;
+}
+
+/* While scrolling the volume, the percentage is the main thing: bigger and tighter. */
+.mt-art.vol .mt-art-hint-label {
+	font-size: 13px;
+	letter-spacing: 0.02em;
+	font-variant-numeric: tabular-nums;
+}
+
+/* No outlines on this panel, to match the borderless look. */
+.dash-power-panel.mt-out-panel,
+.mt-out-panel .dash-power-back {
+	border: none;
+}
+
+/* The Power panel (and any other .dash-power-panel) is see-through the same way. The doubled class
+   is only there to win over the panel's own background without touching its stylesheet; themes
+   that set .theme-retro keep their own look. */
+.dash-power-panel.dash-power-panel:not(.theme-retro *) {
+	background: rgba(18, 15, 12, 0.65);
+	-webkit-backdrop-filter: blur(14px) saturate(1.15);
+	backdrop-filter: blur(14px) saturate(1.15);
+}
+
+/* Somewhat see-through, so the cover and backdrop show behind it. Raise or lower the 0.65. */
+.dash-power-panel.mt-out-panel {
+	background: rgba(18, 15, 12, 0.65);
+	-webkit-backdrop-filter: blur(14px) saturate(1.15);
+	backdrop-filter: blur(14px) saturate(1.15);
+}
+
+/* Split in two: the output devices on the left, the volume mixer on the right. */
+.mt-out-body {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	gap: 12px;
+}
+
+.mt-out-body .mt-out-list {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/* The mixer sits against the right edge and shows 5 sliders at a time (--mix-tile and --mix-gap set
+   the size); with more apps the row scrolls sideways. */
+.mt-mix {
+	--mix-tile: 36px;
+	--mix-gap: 8px;
+	flex: none;
+	margin-left: auto;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	max-width: calc(5 * var(--mix-tile) + 4 * var(--mix-gap) + 12px);
+	padding-left: 12px;
+	border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mt-mix-list {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	gap: var(--mix-gap);
+	padding-top: 4px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	overscroll-behavior: contain;
+	scrollbar-width: thin;
+	scrollbar-color: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 55%, transparent) transparent;
+}
+
+.mt-mix-list::-webkit-scrollbar {
+	height: 3px;
+}
+
+.mt-mix-list::-webkit-scrollbar-thumb {
+	border-radius: 3px;
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 55%, transparent);
+}
+
+.mt-mix-tile {
+	flex: none;
+	width: var(--mix-tile);
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+}
+
+/* A thin track with a filled part and a small round handle where the level is. Only flat colours,
+   gradients and transforms: nothing that blurs or repaints a lot. */
+.mt-mix-bar {
+	flex: 1;
+	min-height: 64px;
+	width: 6px;
+	position: relative;
+	cursor: pointer;
+	touch-action: none;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.1);
+	transition: width 0.12s ease-out;
+}
+
+/* A wider invisible grab area, so a 6 px bar is still easy to hit. */
+.mt-mix-bar::before {
+	content: "";
+	position: absolute;
+	inset: 0 -14px;
+}
+
+.mt-mix-tile:hover .mt-mix-bar,
+.mt-mix-tile.dragging .mt-mix-bar {
+	width: 8px;
+}
+
+.mt-mix-fill {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	border-radius: 999px;
+	background: linear-gradient(
+		to top,
+		color-mix(in srgb, var(--bloom-accent, #ff9f0a) 70%, black),
+		var(--bloom-accent, #ff9f0a)
+	);
+	transition: height 0.12s ease-out;
+}
+
+.mt-mix-fill::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 0;
+	width: 10px;
+	height: 10px;
+	margin: -5px 0 0 -5px;
+	border-radius: 50%;
+	background: #fff4dc;
+	box-shadow: 0 0 0 2px rgba(18, 15, 12, 0.55);
+	transform: scale(0.8);
+	transition: transform 0.12s ease-out;
+}
+
+.mt-mix-tile:hover .mt-mix-fill::after,
+.mt-mix-tile.dragging .mt-mix-fill::after {
+	transform: scale(1);
+}
+
+.mt-mix-tile.dragging .mt-mix-fill {
+	transition: none;
+}
+
+.mt-mix-tile.muted .mt-mix-fill {
+	background: rgba(255, 255, 255, 0.35);
+}
+
+.mt-mix-action {
+	position: relative;
+	flex: none;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	display: grid;
+	place-items: center;
+	font: inherit;
+	font-size: 9px;
+	cursor: pointer;
+	border: none;
+	border-radius: 9px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	transition: background 0.12s ease;
+}
+
+.mt-mix-action:disabled {
+	cursor: default;
+}
+
+.mt-mix-action:not(:disabled):hover {
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.mt-mix-tile.muted .mt-mix-action-icon {
+	opacity: 0.45;
+}
+
+.mt-mix-action-icon,
+.mt-mix-action-pct {
+	grid-area: 1 / 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: opacity 0.12s ease;
+}
+
+.mt-mix-action-icon img {
+	width: 18px;
+	height: 18px;
+	object-fit: contain;
+}
+
+.mt-mix-letter {
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.mt-mix-action-pct {
+	opacity: 0;
+	font-variant-numeric: tabular-nums;
+}
+
+.mt-mix-tile.dragging .mt-mix-action-icon {
+	opacity: 0;
+}
+
+.mt-mix-tile.dragging .mt-mix-action-pct {
+	opacity: 1;
+}
+
+.mt-out-list {
+	flex: 1;
+	min-height: 0;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-auto-rows: 40px;
+	gap: 8px;
+	align-content: start;
+	overflow-y: auto;
+	scrollbar-width: none;
+}
+
+.mt-out-list::-webkit-scrollbar {
+	display: none;
+}
+
+.mt-out-item {
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 0 12px;
+	font: inherit;
+	font-size: 11px;
+	text-align: left;
+	cursor: pointer;
+	border: none;
+	border-radius: 14px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	transition: background 0.15s ease;
+}
+
+.mt-out-item:hover,
+.mt-out-item:focus-visible {
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+	outline: none;
+}
+
+/* The device Windows is using right now. */
+.mt-out-item.active,
+.mt-out-item.active:hover {
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 30%, transparent);
+}
+
+.mt-out-icon {
+	display: flex;
+	flex-shrink: 0;
+	opacity: 0.85;
+}
+
+.mt-out-name {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.mt-out-check {
+	flex-shrink: 0;
+}
+
+.mt-out-empty {
+	grid-column: 1 / -1;
+	padding: 24px 8px;
+	font-size: 11px;
+	text-align: center;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}

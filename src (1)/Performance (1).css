@@ -1,0 +1,478 @@
+/* Performance tab: CPU and GPU on top; storage, network and memory underneath. */
+.pf-grid {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.pf-row {
+	display: grid;
+	gap: 8px;
+	min-height: 0;
+}
+
+.pf-row.top {
+	grid-template-columns: 1fr 1fr;
+	height: 80px;
+	flex-shrink: 0;
+}
+
+.pf-row.bottom {
+	flex: 1;
+	grid-template-columns: 5fr 5fr 3fr;
+}
+
+.pf-card {
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 0;
+	padding: 10px 12px;
+	border-radius: 16px;
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.05));
+}
+
+.pf-title {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.pf-sub {
+	max-width: 100%;
+	font-size: 10px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.pf-detail {
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+}
+
+.pf-heading {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* ---- Rings ---- */
+.pf-ring {
+	position: relative;
+	flex-shrink: 0;
+}
+
+.pf-ring > svg {
+	width: 100%;
+	height: 100%;
+}
+
+.pf-ring > svg circle {
+	fill: none;
+	stroke-width: 7;
+	stroke-linecap: round;
+	transform-box: fill-box;
+	transform-origin: center;
+	transform: rotate(135deg);
+}
+
+.pf-ring-track,
+.pf-mini-ring svg .pf-ring-track {
+	stroke: var(--bloom-border, rgba(255, 255, 255, 0.14));
+}
+
+.pf-ring-value {
+	stroke: var(--bloom-accent, #ff9f0a);
+	transition:
+		stroke-dasharray 0.6s ease,
+		opacity 0.2s ease;
+}
+
+.pf-ring-center {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1px;
+}
+
+.pf-ring-center svg {
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.pf-ring-num {
+	font-size: 17px;
+	font-weight: 600;
+	line-height: 1.1;
+	font-variant-numeric: tabular-nums;
+}
+
+.pf-ring-label {
+	font-size: 9px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+/* ---- CPU / GPU cards ---- */
+.pf-chip {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 6px;
+}
+
+.pf-chip-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.pf-mini-ring {
+	position: relative;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.pf-mini-ring > svg:first-child {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.pf-mini-ring svg circle {
+	fill: none;
+	stroke-width: 3;
+	stroke-linecap: round;
+	transform: none;
+}
+
+.pf-chip-title {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.pf-usage {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+}
+
+.pf-usage-label {
+	font-size: 9px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.pf-usage-value {
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1.1;
+	font-variant-numeric: tabular-nums;
+}
+
+.pf-temp {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+}
+
+.pf-temp-value {
+	min-width: 34px;
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	color: var(--bloom-text, white);
+}
+
+.pf-bar {
+	flex: 1;
+	height: 5px;
+	overflow: hidden;
+	border-radius: 3px;
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+}
+
+.pf-bar-fill {
+	height: 100%;
+	border-radius: 3px;
+	background: var(--bloom-accent, #ff9f0a);
+	transition: width 0.6s ease;
+}
+
+.pf-bar-fill.hot {
+	background: #ff453a;
+}
+
+/* ---- Storage ---- */
+.pf-storage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+}
+
+.pf-storage-top {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+}
+
+.pf-drive-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+}
+
+.pf-storage-text {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.pf-drive {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+	flex: 1;
+	min-width: 0;
+	height: 26px;
+	padding: 0 14px;
+	cursor: pointer;
+	font: inherit;
+	font-size: 11px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-border, rgba(255, 255, 255, 0.1));
+	border: none;
+	border-radius: 13px;
+}
+
+.pf-drive:hover,
+.pf-drive-chevron:hover {
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.16));
+}
+
+.pf-drive-chevron {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	cursor: pointer;
+	color: var(--bloom-text, white);
+	background: var(--bloom-border, rgba(255, 255, 255, 0.1));
+	border: none;
+	border-radius: 50%;
+}
+
+/* ---- Network ---- */
+.pf-network {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.pf-spark {
+	width: 100%;
+	height: auto;
+	flex: 1 1 36px;
+	min-height: 36px;
+	margin-bottom: 4px;
+}
+
+.pf-spark-area {
+	fill: var(--bloom-accent, #ff9f0a);
+	opacity: 0.15;
+}
+
+.pf-spark-down,
+.pf-spark-up {
+	fill: none;
+	stroke-linejoin: round;
+	vector-effect: non-scaling-stroke;
+}
+
+.pf-spark-down {
+	stroke: var(--bloom-accent, #ff9f0a);
+	stroke-width: 1.6;
+}
+
+.pf-spark-up {
+	stroke: var(--bloom-text-muted, rgba(255, 255, 255, 0.5));
+	stroke-width: 1;
+}
+
+.pf-net-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 10.5px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+}
+
+.pf-net-row span {
+	flex: 1;
+}
+
+.pf-net-row b {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--bloom-text, white);
+}
+
+/* ---- Memory ---- */
+.pf-memory {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+}
+
+.pf-memory .pf-heading {
+	align-self: center;
+}
+
+.pf-memory .pf-detail {
+	text-align: center;
+}
+
+/* ---- Retro skin: Performance tab ----------------------------------------
+   Rounded to match the dashboard tabs (cards --retro-r-lg, wells r-md, bars
+   r-sm). Also fixes the drive button, which the generic retro button rule
+   flattened into a bare slab: it gets an explicit paper fill, ink text and the
+   medium radius back. */
+.theme-retro .pf-card {
+	border-radius: var(--retro-r-lg, 16px);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper-deep, #d9cbb4);
+	/* Same pale inner line as the dashboard cards. */
+	box-shadow:
+		inset 0 0 0 2px color-mix(in srgb, #fff 45%, transparent),
+		var(--retro-shadow-sm, 3px 3px 0 var(--retro-ink, #2b2b2b));
+}
+
+.theme-retro .pf-title {
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+/* Crisp gauges. shape-rendering keeps the arc edges hard rather than blurred. */
+.theme-retro .pf-ring > svg,
+.theme-retro .pf-mini-ring > svg {
+	shape-rendering: geometricPrecision;
+}
+
+.theme-retro .pf-ring > svg circle {
+	transform-box: view-box;
+	transform-origin: 50px 50px;
+	transform: rotate(135deg);
+}
+
+.theme-retro .pf-ring-track {
+	stroke: var(--retro-ink-muted, #6b5a4b);
+	opacity: 0.32;
+}
+
+.theme-retro .pf-ring-value {
+	stroke: var(--retro-accent, #cbb752);
+}
+
+.theme-retro .pf-ring-num {
+	font-weight: 700;
+}
+
+/* Drive key: paper fill with ink text and the medium radius restored. The
+   generic rule had set `border-radius: 0` and the original colours were
+   ink-on-ink, so it read as a solid black box. */
+.theme-retro .pf-drive {
+	border-radius: var(--retro-r-md, 9px);
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .pf-drive-chevron {
+	border-radius: var(--retro-r-md, 9px);
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .pf-drive:hover,
+.theme-retro .pf-drive-chevron:hover {
+	background: var(--retro-accent, #cbb752);
+	color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .pf-bar {
+	border-radius: var(--retro-r-sm, 5px);
+	border: 1px solid var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+}
+
+.theme-retro .pf-bar-fill {
+	border-radius: var(--retro-r-sm, 5px);
+	background: var(--retro-accent, #cbb752);
+}
+
+.theme-retro .pf-bar-fill.hot {
+	background: #c0392b;
+}
+
+/* Sparkline. The stock rule fills the area with the accent and draws the trace
+   in the same colour, which on paper turns the whole plot into one beige slab.
+   Here the fill is a light wash and the two traces carry the colour: ink for
+   download (the primary series), a dashed accent for upload. */
+.theme-retro .pf-spark-area {
+	fill: var(--retro-paper, #f0e8d8);
+	opacity: 0.55;
+}
+
+/* A hairline baseline so the plot reads as a chart on the light card. */
+.theme-retro .pf-spark {
+	border-bottom: 1px solid var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .pf-spark-down {
+	stroke: var(--retro-ink, #2b2b2b);
+	stroke-width: 2.2;
+}
+
+.theme-retro .pf-spark-up {
+	stroke: var(--retro-accent-deep, #8a7a2e);
+	stroke-width: 1.8;
+	stroke-dasharray: 4 2.5;
+}
+
+.theme-retro .pf-sub,
+.theme-retro .pf-detail,
+.theme-retro .pf-usage-label,
+.theme-retro .pf-ring-label,
+.theme-retro .pf-net-row {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .pf-net-row b,
+.theme-retro .pf-temp-value,
+.theme-retro .pf-usage-value {
+	color: var(--retro-ink, #2b2b2b);
+}

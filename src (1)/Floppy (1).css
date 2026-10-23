@@ -1,0 +1,127 @@
+/* floppy:v2 */
+/* The cover is no longer a round crop, so the floppy can show in full while it turns. */
+.mt-ring .mt-art {
+	overflow: visible;
+	background: none;
+}
+
+.mt-floppy {
+	display: block;
+	width: 112px;
+	height: 112px;
+	transition:
+		transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+		opacity 0.3s ease;
+}
+
+.mt-floppy-spin {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	/* Upright. The turning, and the angle it rests at, are set around it by .mt-disk (MediaTab.tsx). */
+}
+
+/* Same hover behaviour the cover had: dims and grows a little so the speaker hint reads. */
+.mt-art:hover .mt-floppy,
+.mt-art:focus-visible .mt-floppy,
+.mt-art.vol .mt-floppy {
+	transform: scale(1.06);
+	/* Dimmed a little with opacity instead of brightness() + blur(): animating a blur on a disk that
+	   is turning is what made hovering the Media tab lag. Opacity runs on the GPU for free.
+	   --mt-floppy-hover (MediaDisk.css) sets how much it dims: 1 = not at all. */
+	opacity: var(--mt-floppy-hover, 0.85);
+}
+
+/* The blurred glow copy already fades with .mt-disk-glow (MediaDisk.css), so it is not scaled or
+   dimmed a second time. */
+.mt-art:hover .mt-disk-glow .mt-floppy,
+.mt-art:focus-visible .mt-disk-glow .mt-floppy,
+.mt-art.vol .mt-disk-glow .mt-floppy {
+	transform: none;
+	opacity: 1;
+}
+
+/* The volume ring sits inside the floppy's outline so it stays put while the disk turns. */
+.mt-ring .mt-vol-arc {
+	inset: auto;
+	left: -10px;
+	top: -10px;
+	width: 110px;
+	height: 110px;
+}
+
+/* Flat colours, taken from the reference picture. */
+.fl-body {
+	fill: #f6e098;
+}
+
+.fl-shutter {
+	fill: #dfdfe9;
+}
+
+.fl-lines {
+	fill: #cfb674;
+}
+
+.fl-edge {
+	fill: #a38652;
+}
+
+.fl-ring,
+.fl-mark {
+	fill: #a76b27;
+}
+
+.fl-orange {
+	fill: #eeab35;
+}
+
+.fl-tan {
+	fill: none;
+	stroke: #cfb674;
+	stroke-width: 0.9;
+}
+
+/* Pywal tint: the disk takes the hue of the theme accent (--bloom-accent, which follows the
+   wallpaper's pywal palette), so it sits in the tab instead of standing out as a fixed yellow.
+   Each part keeps its own lightness, so the shading still reads (body light, edge and ring dark);
+   only the hue changes, and the colourfulness is capped at what the original had, so a dull accent
+   gives a muted disk rather than a neon one. --mt-floppy-tint is how much of the accent's hue is
+   used: 100% is all of it, 0% is the original yellow disk. Where the browser cannot do relative
+   colours the rules below are skipped and the original colours above stay. */
+@supports (color: oklch(from red l c h)) {
+	.mt-floppy {
+		--fl-accent: var(--bloom-accent, #ff9f0a);
+		--fl-tint: var(--mt-floppy-tint, 85%);
+	}
+
+	.fl-body {
+		fill: color-mix(in oklab, oklch(from var(--fl-accent) 0.908 min(0.094, c) h) var(--fl-tint), #f6e098);
+	}
+
+	.fl-shutter {
+		fill: color-mix(in oklab, oklch(from var(--fl-accent) 0.907 min(0.03, c) h) var(--fl-tint), #dfdfe9);
+	}
+
+	.fl-lines {
+		fill: color-mix(in oklab, oklch(from var(--fl-accent) 0.783 min(0.09, c) h) var(--fl-tint), #cfb674);
+	}
+
+	.fl-tan {
+		stroke: color-mix(in oklab, oklch(from var(--fl-accent) 0.783 min(0.09, c) h) var(--fl-tint), #cfb674);
+	}
+
+	.fl-edge {
+		fill: color-mix(in oklab, oklch(from var(--fl-accent) 0.635 min(0.078, c) h) var(--fl-tint), #a38652);
+	}
+
+	.fl-ring,
+	.fl-mark {
+		fill: color-mix(in oklab, oklch(from var(--fl-accent) 0.58 min(0.112, c) h) var(--fl-tint), #a76b27);
+	}
+
+	.fl-orange {
+		fill: color-mix(in oklab, oklch(from var(--fl-accent) 0.786 min(0.148, c) h) var(--fl-tint), #eeab35);
+	}
+}

@@ -1,0 +1,111 @@
+/* Text color picker (sheet inside the Command Center) */
+.cc-tc-body {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	gap: 12px;
+}
+
+.cc-tc-left {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.cc-tc-sv {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	border-radius: 10px;
+	cursor: crosshair;
+	touch-action: none;
+	user-select: none;
+}
+
+.cc-tc-knob {
+	position: absolute;
+	width: 12px;
+	height: 12px;
+	margin: -6px 0 0 -6px;
+	border-radius: 50%;
+	border: 2px solid #fff;
+	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+	pointer-events: none;
+}
+
+.cc-tc-hue {
+	-webkit-appearance: none;
+	appearance: none;
+	height: 12px;
+	margin: 0;
+	border-radius: 6px;
+	background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+	outline: none;
+	cursor: pointer;
+}
+
+.cc-tc-hue::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+	background: #fff;
+	border: 2px solid rgba(0, 0, 0, 0.45);
+}
+
+.cc-tc-right {
+	width: 96px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.cc-tc-swatch {
+	height: 40px;
+	flex-shrink: 0;
+	border-radius: 10px;
+}
+
+.cc-tc-hex {
+	box-sizing: border-box;
+	width: 100%;
+	height: 28px;
+	padding: 0 8px;
+	border-radius: 8px;
+	border: none;
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	color: var(--bloom-text, #fff);
+	font: 600 12px ui-monospace, Consolas, monospace;
+	text-align: center;
+	text-transform: uppercase;
+	outline: none;
+}
+
+.cc-tc-hex:focus {
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+}
+
+.cc-tc-auto {
+	margin-top: auto;
+	height: 28px;
+	border-radius: 8px;
+	border: none;
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.75));
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.2s ease, color 0.2s ease;
+}
+
+.cc-tc-auto:hover {
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+	color: var(--bloom-text, #fff);
+}
+
+.cc-tc-auto.active {
+	background: var(--bloom-text, #fff);
+	color: var(--bloom-bg-expanded, #000);
+}

@@ -1,0 +1,67 @@
+/* ---- The flame on the cyan cube (replaces the electric sparks). It is the first flame of the
+   reference gif: 8 filled frames flipped at 70 ms each (cubeFlame.ts). It rises from the middle
+   of the square (the square is drawn on top of its base) and keeps pointing up because the orbit
+   in MediaTab.css counter-rotates the marker. White fill + the cyan glow, like the old flame, so
+   it reads on pale themes too. It only burns while the music plays and fades out when it stops. ---- */
+
+/* Size: the flame box is 124 x 152 units; 0.32 px per unit gives about 40 x 49 px. Change
+   --mt-cf-scale to resize it, and rotate() below to aim it (positive = turned to the right).
+   The base of the flame stays on the middle of the square either way. */
+.mt-core .mt-cube-flame {
+	--mt-cf-scale: 0.32;
+	--mt-cf-ax: 42; /* base of the flame in the box, same as CUBE_FLAME_ANCHOR */
+	--mt-cf-ay: 138;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: calc(124px * var(--mt-cf-scale));
+	height: calc(152px * var(--mt-cf-scale));
+	margin: calc(-1px * var(--mt-cf-ay) * var(--mt-cf-scale)) 0 0 calc(-1px * var(--mt-cf-ax) * var(--mt-cf-scale));
+	overflow: visible;
+	pointer-events: none;
+	/* Moved 2px right and 5px down, then turned 20 degrees to the right (45 minus 25 back to the
+	   left), pivoting on the base of the flame. Change the translate() numbers to nudge it and
+	   rotate() to aim it. */
+	transform: translate(2px, 5px) rotate(20deg);
+	transform-origin: calc(1px * var(--mt-cf-ax) * var(--mt-cf-scale)) calc(1px * var(--mt-cf-ay) * var(--mt-cf-scale));
+	filter: drop-shadow(0 0 1.5px rgba(77, 230, 255, 0.95)) drop-shadow(0 0 4px rgba(77, 230, 255, 0.6));
+	opacity: 0;
+	transition: opacity 0.3s ease-out;
+}
+
+.mt-end.playing .mt-cube-flame {
+	opacity: 1;
+}
+
+.mt-cf-frame {
+	fill: #ffffff;
+	fill-rule: evenodd;
+	opacity: 0;
+	/* 8 frames x 0.07s = 0.56s per loop (matches CUBE_FLAME_FRAME_SECONDS). */
+	animation: mt-cf-show 0.56s steps(1, end) infinite;
+	animation-play-state: paused;
+}
+
+.mt-end.playing .mt-cf-frame {
+	animation-play-state: running;
+}
+
+/* Each frame is up for one eighth of the loop. */
+@keyframes mt-cf-show {
+	0% {
+		opacity: 1;
+	}
+	12.5%,
+	100% {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mt-cf-frame {
+		animation: none;
+	}
+	.mt-cf-frame:first-child {
+		opacity: 1;
+	}
+}

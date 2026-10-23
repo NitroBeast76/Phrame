@@ -1,0 +1,154 @@
+/* The scene behind the Time gun (see TimeGunBackdrop.tsx). It sits under the gun and the cube and never takes the mouse. */
+/* The box around the drawing carries the camera follow (zoom in on the chamber), on the same time and curve as the gun's camera. */
+.tgb-cam {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	transition: transform var(--tg-focus-ms, 560ms) var(--tg-focus-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.tgb {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	pointer-events: none;
+	--tgb-red: #ff3b30;
+	--tgb-ink: var(--bloom-text, #fff);
+}
+
+.tgb-dots {
+	opacity: 0.1;
+}
+.tgb pattern circle {
+	fill: var(--tgb-ink);
+}
+
+/* Floppy disks: outline only, in the theme's text colour. */
+.tgb-disk {
+	color: var(--tgb-ink);
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.4px;
+	vector-effect: non-scaling-stroke;
+	stroke-linejoin: round;
+	stroke-linecap: round;
+}
+.tgb-disk-a {
+	opacity: 0.14;
+	animation: tgb-drift 14s ease-in-out infinite alternate;
+}
+.tgb-disk-b {
+	opacity: 0.12;
+	animation: tgb-drift 11s ease-in-out -4s infinite alternate;
+}
+.tgb-disk-c {
+	opacity: 0.1;
+	animation: tgb-drift 9s ease-in-out -2s infinite alternate;
+}
+@keyframes tgb-drift {
+	from { translate: 0 0; }
+	to { translate: 0 -4px; }
+}
+
+/* Signs */
+.tgb-signs path,
+.tgb-signs circle {
+	fill: none;
+	stroke: #f2b441;
+	stroke-width: 1.2px;
+	stroke-linejoin: round;
+	opacity: 0.2;
+}
+.tgb-signs .tgb-stop {
+	stroke: var(--tgb-red);
+	opacity: 0.3;
+}
+.tgb-signs text {
+	fill: var(--tgb-red);
+	font-size: 9px;
+	font-weight: 700;
+	opacity: 0.3;
+}
+
+/* Laser */
+.tgb-laser path {
+	fill: none;
+	stroke: var(--tgb-red);
+	stroke-linecap: round;
+}
+.tgb-laser-glow { stroke-width: 9px; opacity: 0.07; }
+.tgb-laser-mid { stroke-width: 3.4px; opacity: 0.22; }
+.tgb-laser-core { stroke-width: 1.1px; opacity: 0.9; }
+/* A white-hot flash down the laser at the moment the hammer lands (TimeGunBackdrop.tsx animates its opacity). */
+.tgb-laser .tgb-laser-flash {
+	stroke: #fff;
+	stroke-width: 2.2px;
+	opacity: 0;
+}
+.tgb-laser .tgb-laser-pulse {
+	stroke: #ffd6d2;
+	stroke-width: 1.6px;
+	stroke-dasharray: 6 94;
+	stroke-dashoffset: 6;
+	opacity: 0;
+}
+.tgb.running .tgb-laser-pulse {
+	opacity: 0.95;
+	animation: tgb-pulse 2.6s linear infinite;
+}
+@keyframes tgb-pulse {
+	to { stroke-dashoffset: -94; }
+}
+
+/* Crossing barrier */
+.tgb-gate path {
+	fill: none;
+	stroke-width: 4px;
+	stroke-linecap: butt;
+}
+.tgb-gate-red { stroke: var(--tgb-red); opacity: 0.32; }
+.tgb-gate-white { stroke: #fff; stroke-dasharray: 9 9; opacity: 0.28; }
+.tgb-gate circle { fill: var(--tgb-ink); opacity: 0.35; }
+
+/* Crossing lights: dim and steady, blinking in turn while the timer runs. */
+.tgb-lamp { opacity: 0.8; }
+.tgb-halo { opacity: 0.35; }
+.tgb.running .tgb-l1 { animation: tgb-blink 1.2s steps(1, end) infinite; }
+.tgb.running .tgb-l2 { animation: tgb-blink 1.2s steps(1, end) -0.6s infinite; }
+@keyframes tgb-blink {
+	0% { opacity: 1; }
+	50% { opacity: 0.12; }
+}
+
+/* Memory cells: little X marks */
+.tgb-cells path {
+	fill: none;
+	stroke: var(--tgb-ink);
+	stroke-width: 1.3px;
+	stroke-linecap: round;
+	opacity: 0.16;
+}
+.tgb-cells .lit-r { stroke: var(--tgb-red); opacity: 0.85; }
+.tgb-cells .lit-a { stroke: var(--bloom-accent, #4de6ff); opacity: 0.75; }
+.tgb.running .tgb-cells .lit-r { animation: tgb-flicker 1.7s steps(1, end) infinite; }
+.tgb.running .tgb-cells .lit-a { animation: tgb-flicker 2.3s steps(1, end) -0.8s infinite; }
+@keyframes tgb-flicker {
+	0% { opacity: 0.8; }
+	35% { opacity: 0.15; }
+	60% { opacity: 0.8; }
+	80% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tgb-cam {
+		transition: none;
+	}
+	.tgb *,
+	.tgb.running * {
+		animation: none !important;
+	}
+	.tgb.running .tgb-laser-pulse {
+		opacity: 0;
+	}
+}

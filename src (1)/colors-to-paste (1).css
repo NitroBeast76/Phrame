@@ -1,0 +1,12 @@
+/* In TimeGun.css, inside the .tg-gun { ... } block, set these variables: */
+	--tg-ink: #19232d;
+	--tg-frame-hi: #fdfdfd;
+	--tg-frame-light: #bdcad1;
+	--tg-frame-accent: #9eabb8;
+	--tg-frame-dark: #3b4d60;
+	--tg-slot-hi: #dee2e4;
+	--tg-slot-lo: #ccd2d6;
+	--tg-grip-back: #556a80;
+	--tg-grip-light: #818d97;
+	--tg-hammer: #bdcad1;
+	--tg-hammer-base: #9eabb8;

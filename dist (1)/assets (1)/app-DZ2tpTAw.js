@@ -1,0 +1,1 @@
+import{i as s}from"./theme-BJkWvOSc.js";var p;(function(i){i.Nsis="nsis",i.Msi="msi",i.Deb="deb",i.Rpm="rpm",i.AppImage="appimage",i.App="app"})(p||(p={}));async function r(){return s("plugin:app|version")}export{r as g};

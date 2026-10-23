@@ -1,0 +1,1390 @@
+/* Tasks board (kanban) */
+.tasks-panel.tb-panel {
+	padding: 2px 16px 14px;
+	gap: 0;
+	/* The board inside keeps its final width while the notch grows; this clips the part that
+	   has not been revealed yet. */
+	overflow: hidden;
+}
+
+.tb-board {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-rows: minmax(0, 1fr);
+	gap: 8px;
+	user-select: none;
+	-webkit-user-select: none;
+	white-space: normal;
+}
+
+.tb-board.dragging,
+.tb-board.dragging * {
+	cursor: grabbing !important;
+}
+
+.tb-col {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+	border-radius: 12px;
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.04));
+	transition: background 0.15s ease;
+}
+
+.tb-col.drop-target {
+	background: rgba(255, 255, 255, 0.08);
+}
+
+/* The column a card was just dropped into flashes once, starting at release. */
+.tb-col.landed {
+	animation: tb-col-landed 0.48s ease-out;
+}
+
+@keyframes tb-col-landed {
+	0% {
+		background: rgba(255, 255, 255, 0.1);
+	}
+
+	100% {
+		background: var(--bloom-group-bg, rgba(255, 255, 255, 0.04));
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tb-col.landed {
+		animation: none;
+	}
+}
+
+.tb-col-head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+	padding: 7px 10px;
+}
+
+.tb-grip {
+	opacity: 0.35;
+	flex-shrink: 0;
+}
+
+.tb-col-title {
+	flex: 1;
+	min-width: 0;
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tb-col-count {
+	font-size: 10px;
+	opacity: 0.5;
+}
+
+.tb-clear {
+	font: inherit;
+	font-size: 9px;
+	padding: 1px 6px;
+	border-radius: 5px;
+	cursor: pointer;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+	background: rgba(255, 255, 255, 0.08);
+	border: none;
+}
+
+.tb-clear:hover {
+	color: var(--bloom-text, white);
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+/* position: relative on col, list and board lets the drag code measure cards
+   with offsetLeft / offsetTop, which ignore transforms and the notch zoom. */
+.tb-list {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 6px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	scrollbar-width: none;
+}
+
+.tb-list::-webkit-scrollbar {
+	display: none;
+}
+
+.tb-card {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	flex-shrink: 0;
+	box-sizing: border-box;
+	padding: 7px 8px;
+	border-radius: 9px;
+	cursor: grab;
+	touch-action: none;
+	background: transparent;
+	transition: background 0.12s ease;
+}
+
+.tb-card:hover {
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+}
+
+.tb-card-main {
+	flex: 1;
+	min-width: 0;
+}
+
+.tb-card-title {
+	font-size: 12px;
+	line-height: 1.3;
+	font-weight: 600;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.tb-card-due {
+	margin-top: 2px;
+	font-size: 10px;
+	line-height: 1.3;
+	opacity: 0.6;
+	white-space: normal;
+}
+
+.tb-card-due.past {
+	color: #0a84ff;
+	opacity: 1;
+}
+
+.tb-card.done .tb-card-title {
+	opacity: 0.45;
+	text-decoration: line-through;
+}
+
+.tb-card.done .tb-card-due {
+	opacity: 0.4;
+}
+
+/* Finishing a task: the circle pops and its tick draws itself, a ring and a few
+   sparks burst out, the card flashes green and the title gets struck through. */
+.tb-card.just-done {
+	animation: tb-done-flash 1s ease-out;
+}
+
+.tb-card.just-done .tb-check {
+	animation: tb-check-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tb-card.just-done .tb-check svg * {
+	stroke-dasharray: 24;
+	stroke-dashoffset: 24;
+	animation: tb-check-draw 0.32s ease-out 0.12s forwards;
+}
+
+.tb-card.just-done .tb-check::after {
+	content: "";
+	position: absolute;
+	inset: -1.5px;
+	border: 2px solid #30d158;
+	border-radius: 50%;
+	pointer-events: none;
+	animation: tb-done-ring 0.6s ease-out forwards;
+}
+
+.tb-card.just-done .tb-check::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 3px;
+	height: 3px;
+	margin: -1.5px 0 0 -1.5px;
+	border-radius: 50%;
+	pointer-events: none;
+	box-shadow:
+		0 -7px 0 #30d158,
+		6px -3.5px 0 #ffd60a,
+		6px 3.5px 0 #5ac8fa,
+		0 7px 0 #30d158,
+		-6px 3.5px 0 #ffd60a,
+		-6px -3.5px 0 #5ac8fa;
+	animation: tb-done-sparks 0.65s ease-out 0.05s both;
+}
+
+.tb-card.just-done .tb-card-title {
+	animation: tb-done-strike 0.5s ease 0.15s both;
+}
+
+@keyframes tb-done-flash {
+	0% {
+		background: rgba(48, 209, 88, 0.3);
+	}
+
+	100% {
+		background: rgba(48, 209, 88, 0);
+	}
+}
+
+@keyframes tb-check-pop {
+	0% {
+		transform: scale(0.6);
+	}
+
+	55% {
+		transform: scale(1.3);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+@keyframes tb-check-draw {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+
+@keyframes tb-done-ring {
+	0% {
+		transform: scale(1);
+		opacity: 0.85;
+	}
+
+	100% {
+		transform: scale(2.3);
+		opacity: 0;
+	}
+}
+
+@keyframes tb-done-sparks {
+	0% {
+		transform: scale(0.3);
+		opacity: 1;
+	}
+
+	100% {
+		transform: scale(2);
+		opacity: 0;
+	}
+}
+
+@keyframes tb-done-strike {
+	from {
+		opacity: 1;
+		text-decoration-color: transparent;
+	}
+
+	to {
+		opacity: 0.45;
+		text-decoration-color: currentColor;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tb-card.just-done,
+	.tb-card.just-done .tb-check,
+	.tb-card.just-done .tb-check::before,
+	.tb-card.just-done .tb-check::after {
+		animation: none;
+	}
+}
+
+.tb-check {
+	position: relative;
+	width: 15px;
+	height: 15px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border-radius: 50%;
+	cursor: pointer;
+	color: #000;
+	background: transparent;
+	border: 1.5px solid var(--bloom-text-muted, rgba(255, 255, 255, 0.5));
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.tb-card.progress .tb-check {
+	border-color: #ff9f0a;
+	background: linear-gradient(90deg, #ff9f0a 50%, transparent 50%);
+}
+
+.tb-card.done .tb-check {
+	background: #30d158;
+	border-color: #30d158;
+}
+
+
+.tb-prio {
+	position: relative;
+	width: 9px;
+	height: 9px;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	background: #ff9f0a;
+}
+
+.tb-prio::before {
+	content: "";
+	position: absolute;
+	inset: -5px;
+	border: 1px solid transparent;
+	border-radius: 50%;
+	transition: border-color 0.12s ease;
+}
+
+.tb-prio:hover::before,
+.tb-prio:focus-visible::before {
+	border-color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+}
+
+.tb-prio.p1 {
+	background: #5ac8fa;
+}
+
+.tb-prio.p2 {
+	background: #ff9f0a;
+}
+
+.tb-prio.p3 {
+	background: #ff453a;
+}
+
+.tb-card.done .tb-prio {
+	opacity: 0.5;
+}
+
+.tb-card-side {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	flex-shrink: 0;
+}
+
+.tb-bell {
+	display: flex;
+	opacity: 0.6;
+}
+
+.tb-bell.fired {
+	opacity: 0.3;
+}
+
+.tb-del {
+	width: 18px;
+	height: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	opacity: 0;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+	background: transparent;
+}
+
+.tb-card:hover .tb-del {
+	opacity: 1;
+}
+
+.tb-del:hover {
+	color: var(--bloom-text, white);
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+/* Where the dragged card will land: an empty gap with a thin insertion line. */
+.tb-placeholder {
+	position: relative;
+	flex-shrink: 0;
+	box-sizing: border-box;
+	border-radius: 9px;
+	animation: tb-placeholder-in 0.18s ease-out both;
+}
+
+.tb-placeholder::after {
+	content: "";
+	position: absolute;
+	left: 6px;
+	right: 6px;
+	top: 50%;
+	height: 2px;
+	margin-top: -1px;
+	border-radius: 2px;
+	background: var(--bloom-text, white);
+	opacity: 0.55;
+}
+
+/* The real card waits invisibly while the dragged copy flies onto it. */
+.tb-card.tb-landing {
+	visibility: hidden;
+}
+
+@keyframes tb-placeholder-in {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+.tb-empty {
+	flex: 1;
+	min-height: 44px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	font-size: 11px;
+	opacity: 0.45;
+	background: rgba(255, 255, 255, 0.04);
+	border-radius: 9px;
+}
+
+/* The card that follows the cursor. */
+.tb-ghost {
+	position: absolute;
+	left: 0;
+	top: 0;
+	z-index: 20;
+	box-sizing: border-box;
+	pointer-events: none;
+	will-change: transform;
+	border-radius: 9px;
+	background: var(--bloom-bg-expanded, rgba(24, 24, 28, 0.96));
+	/* No outline: the lifted copy reads from its background and shadow alone. */
+	box-shadow:
+		0 14px 28px rgba(0, 0, 0, 0.45),
+		0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.tb-ghost .tb-card {
+	cursor: grabbing;
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+}
+
+.tb-ghost .tb-del {
+	display: none;
+}
+
+.tb-foot {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 28px;
+	padding: 3px 6px;
+}
+
+.tb-add {
+	width: 100%;
+	height: 22px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: none;
+	border-radius: 7px;
+	cursor: pointer;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+	background: transparent;
+}
+
+.tb-add:hover {
+	color: var(--bloom-text, white);
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.08));
+}
+
+.tb-input,
+.tb-time {
+	box-sizing: border-box;
+	height: 22px;
+	padding: 0 7px;
+	font: inherit;
+	font-size: 11px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	border: none;
+	border-radius: 7px;
+	outline: none;
+}
+
+.tb-input {
+	flex: 1;
+	min-width: 0;
+}
+
+/* Add-a-task line above the columns. */
+.tb-addrow {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+
+/* In the retro theme the lane reads as one trough: the field and its button
+   share a single fill, so there is no seam between them. */
+.theme-retro .tb-addrow {
+	gap: 0;
+	padding: 0 4px 0 0;
+	border-radius: 14px;
+	background: var(--retro-paper, #f0e8d8);
+	/* An ink outline, so the lane reads as a field like the one in the reference. */
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	transition: background 0.14s ease;
+}
+
+.theme-retro .tb-addrow:hover {
+	background: color-mix(in srgb, #fff 35%, var(--retro-paper, #f0e8d8));
+}
+
+.theme-retro .tb-addrow:focus-within {
+	background: var(--retro-paper, #f0e8d8);
+}
+
+.theme-retro .tb-addrow .tb-input,
+.theme-retro .tb-addrow .tb-time {
+	background: transparent;
+	box-shadow: none;
+}
+
+.theme-retro .tb-addrow .tb-time {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .tb-addrow .tb-time:focus,
+.theme-retro .tb-addrow .tb-time:hover {
+	color: var(--retro-ink, #2b2b2b);
+	background: transparent;
+}
+
+/* The "+" is a small accent tile with its own outline, as in the reference. */
+.theme-retro .tb-addrow .tb-icon-btn,
+.theme-retro .tb-addrow .tb-icon-btn.accent {
+	width: 24px;
+	height: 24px;
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	border-radius: 8px;
+}
+
+.theme-retro .tb-addrow .tb-icon-btn.accent:hover:not(:disabled) {
+	color: var(--retro-paper, #f0e8d8);
+	background: var(--retro-ink, #2b2b2b);
+}
+
+.tb-addrow .tb-input,
+.tb-addrow .tb-time {
+	height: 28px;
+	font-size: 12px;
+	padding: 0 10px;
+	border-radius: 14px;
+}
+
+.tb-addrow .tb-time {
+	width: 76px;
+	padding: 0 8px;
+	font-size: 11px;
+}
+
+.tb-addrow .tb-icon-btn {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+}
+
+.tb-time {
+	width: 62px;
+	flex-shrink: 0;
+	padding: 0 4px;
+	font-size: 10px;
+}
+
+.tb-input:focus,
+.tb-time:focus {
+	/* A focused field needs an opaque, readable surface. In the retro theme
+	   --bloom-border is solid ink, so the old rule painted ink behind ink text
+	   and the value vanished while typing. */
+	background: var(--bloom-field, rgba(255, 255, 255, 0.12));
+}
+
+.tb-time::-webkit-calendar-picker-indicator {
+	display: none;
+}
+
+.tb-icon-btn {
+	width: 22px;
+	height: 22px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border-radius: 7px;
+	cursor: pointer;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+	background: rgba(255, 255, 255, 0.08);
+	border: none;
+}
+
+.tb-icon-btn:hover {
+	color: var(--bloom-text, white);
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.tb-icon-btn.accent {
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-text, white);
+}
+
+.tb-icon-btn:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+
+.theme-retro .tb-icon-btn:hover:not(:disabled) {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--bloom-hover, rgba(43, 43, 43, 0.1));
+}
+
+
+/* The add-a-task lane.
+   No border: on paper an outlined input inside an outlined, shadowed panel read
+   as a box in a box. Shape comes from the fill instead -- it darkens on hover,
+   and on focus the fill clears toward the paper while the text goes full ink,
+   so the active field is the lightest thing in the row rather than the loudest. */
+.theme-retro .tb-input,
+.theme-retro .tb-time {
+	color: var(--retro-ink-muted, #6b5a4b);
+	background: var(--bloom-hover, rgba(43, 43, 43, 0.08));
+	border: none;
+	outline: none;
+	transition:
+		background 0.14s ease,
+		color 0.14s ease;
+}
+
+.theme-retro .tb-input:hover,
+.theme-retro .tb-time:hover {
+	color: var(--retro-ink, #2b2b2b);
+	background: rgba(43, 43, 43, 0.14);
+}
+
+.theme-retro .tb-input:focus,
+.theme-retro .tb-time:focus {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	/* A single hairline keeps the caret from floating on empty paper. */
+	box-shadow: inset 0 0 0 1px rgba(43, 43, 43, 0.28);
+}
+
+.theme-retro .tb-input::placeholder {
+	color: var(--retro-ink-muted, #6b5a4b);
+	opacity: 0.75;
+}
+
+/* ---- Priority, pinning and groups -------------------------------------- */
+
+/* Priority reads as a bar down the leading edge of the card. It is absolutely
+   positioned so it does not disturb the flex row the drag code measures. */
+.tb-card {
+	position: relative;
+	overflow: hidden;
+}
+
+.tb-prio-bar {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 3px;
+	border-radius: 0 2px 2px 0;
+}
+
+.tb-prio-bar.p1 {
+	background: var(--tb-prio-1);
+}
+
+.tb-prio-bar.p2 {
+	background: var(--tb-prio-2);
+}
+
+.tb-prio-bar.p3 {
+	background: var(--tb-prio-3);
+}
+
+.tb-card.done .tb-prio-bar {
+	opacity: 0.35;
+}
+
+/* Pinned cards get a faint tint so a pinned task is identifiable in a scan. */
+.tb-card.pinned {
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.08));
+}
+
+.tb-pin {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.55));
+	background: transparent;
+	border: none;
+	border-radius: 5px;
+	opacity: 0.45;
+	transition:
+		opacity 0.12s ease,
+		color 0.12s ease,
+		background 0.12s ease;
+}
+
+.tb-card:hover .tb-pin {
+	opacity: 1;
+}
+
+.tb-pin:hover {
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.tb-pin.on {
+	opacity: 1;
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+/* Group tag on the card. */
+.tb-card-group {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	max-width: 96px;
+	flex-shrink: 0;
+	padding: 1px 6px;
+	font-size: 9px;
+	border-radius: 999px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.08));
+}
+
+/* Group header inside a column. */
+.tb-group-head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+	padding: 4px 4px 1px;
+	font-size: 9.5px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.tb-group-name {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tb-group-count {
+	opacity: 0.7;
+}
+
+/* Toolbar above the add lane. */
+.tb-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+	margin-bottom: 6px;
+}
+
+.tb-group-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 9px;
+	font: inherit;
+	font-size: 10px;
+	cursor: pointer;
+	border: none;
+	border-radius: 999px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	transition:
+		background 0.12s ease,
+		color 0.12s ease;
+}
+
+.tb-group-toggle:hover {
+	color: var(--bloom-text, white);
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.tb-group-toggle.on {
+	color: var(--bloom-bg-expanded, #000);
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+/* ---- Full-size task editor --------------------------------------------- */
+
+.tb-editor-scrim {
+	position: absolute;
+	inset: 0;
+	z-index: 40;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 10px;
+	background: rgba(0, 0, 0, 0.35);
+	border-radius: 12px;
+	animation: tb-editor-in 0.14s ease-out;
+}
+
+@keyframes tb-editor-in {
+	from {
+		opacity: 0;
+	}
+}
+
+.tb-editor {
+	box-sizing: border-box;
+	width: min(560px, 100%);
+	max-height: 100%;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 7px;
+	padding: 14px 16px;
+	border-radius: 16px;
+	background: var(--bloom-bg-expanded, rgba(20, 20, 22, 0.98));
+	color: var(--bloom-text, white);
+	box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+	animation: tb-editor-pop 0.18s cubic-bezier(0.3, 1.1, 0.5, 1);
+}
+
+@keyframes tb-editor-pop {
+	from {
+		transform: scale(0.97) translateY(6px);
+	}
+}
+
+.tb-editor-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.tb-editor-title {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.tb-editor-close {
+	width: 22px;
+	height: 22px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	border: none;
+	border-radius: 6px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+	background: transparent;
+}
+
+.tb-editor-close:hover {
+	color: var(--bloom-text, white);
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.tb-editor-label {
+	font-size: 9.5px;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	opacity: 0.6;
+}
+
+.tb-editor-text,
+.tb-editor-notes,
+.tb-editor-input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 7px 9px;
+	font: inherit;
+	font-size: 12px;
+	border: none;
+	border-radius: 9px;
+	outline: none;
+	resize: vertical;
+	color: var(--bloom-text, white);
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.07));
+	transition: background 0.14s ease;
+}
+
+.tb-editor-text {
+	min-height: 52px;
+	font-weight: 600;
+}
+
+.tb-editor-notes {
+	min-height: 44px;
+	font-size: 11px;
+}
+
+.tb-editor-text:focus,
+.tb-editor-notes:focus,
+.tb-editor-input:focus {
+	background: var(--bloom-field, rgba(255, 255, 255, 0.12));
+}
+
+.tb-editor-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.tb-editor-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+
+.tb-editor-segments {
+	display: flex;
+	gap: 4px;
+}
+
+.tb-editor-seg {
+	flex: 1;
+	min-width: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	padding: 5px 6px;
+	font: inherit;
+	font-size: 10px;
+	cursor: pointer;
+	border: none;
+	border-radius: 8px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	transition:
+		background 0.12s ease,
+		color 0.12s ease;
+}
+
+.tb-editor-seg:hover {
+	color: var(--bloom-text, white);
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.tb-editor-seg.on {
+	color: var(--bloom-bg-expanded, #000);
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+.tb-editor-swatch {
+	width: 7px;
+	height: 7px;
+	flex-shrink: 0;
+	border-radius: 50%;
+}
+
+.tb-editor-swatch.p1 {
+	background: var(--tb-prio-1);
+}
+
+.tb-editor-swatch.p2 {
+	background: var(--tb-prio-2);
+}
+
+.tb-editor-swatch.p3 {
+	background: var(--tb-prio-3);
+}
+
+.tb-editor-seg.prio.on {
+	color: var(--bloom-text, white);
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.14));
+}
+
+.tb-editor-seg.prio.p1.on {
+	background: var(--tb-prio-1);
+	color: var(--tb-prio-1-fg);
+}
+
+.tb-editor-seg.prio.p2.on {
+	background: var(--tb-prio-2);
+	color: var(--tb-prio-2-fg);
+}
+
+.tb-editor-seg.prio.p3.on {
+	background: var(--tb-prio-3);
+	color: var(--tb-prio-3-fg);
+}
+
+.tb-editor-pin {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	padding: 6px 8px;
+	font: inherit;
+	font-size: 10px;
+	cursor: pointer;
+	border: none;
+	border-radius: 8px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+}
+
+.tb-editor-pin:hover {
+	color: var(--bloom-text, white);
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.tb-editor-pin.on {
+	color: var(--bloom-bg-expanded, #000);
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+.tb-editor-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-top: 2px;
+}
+
+.tb-editor-hint {
+	font-size: 9.5px;
+	opacity: 0.5;
+}
+
+.tb-editor-actions {
+	display: flex;
+	gap: 6px;
+}
+
+.tb-editor-btn {
+	padding: 6px 14px;
+	font: inherit;
+	font-size: 11px;
+	cursor: pointer;
+	border: none;
+	border-radius: 9px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.08));
+}
+
+.tb-editor-btn:hover {
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.14));
+}
+
+.tb-editor-btn.primary {
+	color: var(--bloom-bg-expanded, #000);
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+.tb-editor-btn.danger:hover {
+	color: white;
+	background: #ff453a;
+}
+
+/* ---- Retro: the editor and the new card pieces -------------------------- */
+
+.theme-retro .tb-editor-scrim {
+	background: rgba(43, 43, 43, 0.3);
+}
+
+.theme-retro .tb-editor {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	box-shadow: var(--retro-shadow, 4px 4px 0 var(--retro-ink, #2b2b2b));
+}
+
+.theme-retro .tb-editor-text,
+.theme-retro .tb-editor-notes,
+.theme-retro .tb-editor-input {
+	color: var(--retro-ink, #2b2b2b);
+	background: rgba(43, 43, 43, 0.08);
+}
+
+.theme-retro .tb-editor-text:focus,
+.theme-retro .tb-editor-notes:focus,
+.theme-retro .tb-editor-input:focus {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	box-shadow: inset 0 0 0 1px rgba(43, 43, 43, 0.28);
+}
+
+.theme-retro .tb-editor-seg,
+.theme-retro .tb-editor-pin,
+.theme-retro .tb-editor-btn {
+	color: var(--retro-ink, #2b2b2b);
+	background: rgba(43, 43, 43, 0.08);
+}
+
+.theme-retro .tb-editor-seg:hover,
+.theme-retro .tb-editor-pin:hover,
+.theme-retro .tb-editor-btn:hover {
+	color: var(--retro-ink, #2b2b2b);
+	background: rgba(43, 43, 43, 0.16);
+}
+
+.theme-retro .tb-editor-seg.on,
+.theme-retro .tb-editor-pin.on,
+.theme-retro .tb-editor-btn.primary {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+}
+
+.theme-retro .tb-group-head,
+.theme-retro .tb-card-group,
+.theme-retro .tb-group-toggle {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+/* The group switch is an outlined pill too. */
+.theme-retro .tb-group-toggle {
+	background: var(--retro-paper, #f0e8d8);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	border-radius: 999px;
+}
+
+.theme-retro .tb-group-toggle:hover {
+	color: var(--retro-ink, #2b2b2b);
+	background: rgba(43, 43, 43, 0.14);
+}
+
+.theme-retro .tb-group-toggle.on {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+}
+
+.theme-retro .tb-card.pinned {
+	background: rgba(43, 43, 43, 0.08);
+}
+
+.theme-retro .tb-pin {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .tb-pin.on {
+	color: var(--retro-ink, #2b2b2b);
+}
+
+/* Priority ramp. Defined once as variables so a theme can restate the three
+   steps without every rule needing a theme-scoped copy. */
+:root {
+	--tb-prio-1: #5ac8fa;
+	--tb-prio-2: #ff9f0a;
+	--tb-prio-3: #ff453a;
+	--tb-prio-1-fg: #04222e;
+	--tb-prio-2-fg: #241300;
+	--tb-prio-3-fg: #2a0400;
+}
+
+.theme-retro {
+	/* On paper the stock ramp looks imported: a cyan and a neon red against
+	   ink and cream read as another app's chrome. These are pulled toward the
+	   sheet instead -- the accent for low, a warmer amber for medium, and a
+	   deep brick for high -- so the card edge looks drawn rather than stuck on. */
+	--tb-prio-1: #7fb3c8;
+	--tb-prio-2: #d9a13b;
+	--tb-prio-3: #b4442f;
+	--tb-prio-1-fg: #0d2b36;
+	--tb-prio-2-fg: #33230a;
+	--tb-prio-3-fg: #f6ece2;
+}
+
+/* ---- Retro: board surfaces, check circle, group heads -------------------
+   The stock board is built from translucent washes over the notch blur. On
+   paper that is wrong twice over: it lets the desktop show through, and it
+   muddies the tint. These give the retro board opaque surfaces instead. */
+.theme-retro .tb-col {
+	background: var(--retro-paper, #f0e8d8);
+	/* The same ink outline and pale inner line as the dashboard cards. */
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	border-radius: var(--retro-r-lg, 16px);
+	box-shadow: inset 0 0 0 2px color-mix(in srgb, #fff 45%, transparent);
+}
+
+.theme-retro .tb-col.drop-target {
+	background: var(--retro-paper-deep, #d9cbb4);
+	border-color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .tb-col.landed {
+	animation: none;
+	background: var(--retro-paper, #f0e8d8);
+}
+
+.theme-retro .tb-col-head {
+	border-bottom: 1px solid rgba(43, 43, 43, 0.18);
+}
+
+.theme-retro .tb-col-title {
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+/* Cards: a paper chip with a hairline, so the list reads as stacked slips. */
+.theme-retro .tb-card {
+	background: rgba(255, 255, 255, 0.42);
+	border: 1px solid rgba(43, 43, 43, 0.16);
+	border-radius: var(--retro-r-md, 9px);
+}
+
+.theme-retro .tb-card:hover {
+	background: rgba(255, 255, 255, 0.72);
+	border-color: rgba(43, 43, 43, 0.34);
+}
+
+.theme-retro .tb-card.pinned {
+	background: rgba(255, 255, 255, 0.72);
+	border-color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .tb-card.done {
+	background: rgba(255, 255, 255, 0.22);
+	border-style: dashed;
+}
+
+/* The check box: a rounded square with an ink outline, like the reference to-do list. It fills
+   with the accent and shows an ink tick once the task is done. */
+.theme-retro .tb-check {
+	width: 17px;
+	height: 17px;
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	border-radius: 5px;
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+}
+
+.theme-retro .tb-check:hover {
+	background: color-mix(in srgb, var(--retro-accent, #cbb752) 45%, var(--retro-paper, #f0e8d8));
+}
+
+.theme-retro .tb-card.done .tb-check {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+	border-color: var(--retro-ink, #2b2b2b);
+}
+
+/* Finishing a task, in the paper colours instead of the stock green: the box pops, a ring and
+   a few sparks in the accent and ink burst out, and the card flashes the accent. */
+.theme-retro .tb-card.just-done {
+	animation: tb-done-flash-retro 1s ease-out;
+}
+
+.theme-retro .tb-card.just-done .tb-check::after {
+	border-color: var(--retro-accent-deep, #8a7a2e);
+	border-radius: 7px;
+}
+
+.theme-retro .tb-card.just-done .tb-check::before {
+	box-shadow:
+		0 -7px 0 var(--retro-accent, #cbb752),
+		6px -3.5px 0 var(--retro-ink, #2b2b2b),
+		6px 3.5px 0 var(--retro-accent-deep, #8a7a2e),
+		0 7px 0 var(--retro-accent, #cbb752),
+		-6px 3.5px 0 var(--retro-ink, #2b2b2b),
+		-6px -3.5px 0 var(--retro-accent-deep, #8a7a2e);
+}
+
+@keyframes tb-done-flash-retro {
+	0% {
+		background: color-mix(in srgb, var(--retro-accent, #cbb752) 55%, transparent);
+	}
+
+	100% {
+		background: transparent;
+	}
+}
+
+/* Group tag and group header. */
+.theme-retro .tb-card-group {
+	background: rgba(43, 43, 43, 0.1);
+	border-radius: 6px;
+}
+
+.theme-retro .tb-group-head {
+	border-top: 1px solid rgba(43, 43, 43, 0.16);
+	padding-top: 6px;
+}
+
+.theme-retro .tb-group-head:first-child {
+	border-top: none;
+	padding-top: 2px;
+}
+
+/* The empty state and the "Clear" button. */
+.theme-retro .tb-empty {
+	color: var(--retro-ink-muted, #6b5a4b);
+	opacity: 0.7;
+}
+
+/* "Clear" is a small outlined pill, like "clear done" in the reference. */
+.theme-retro .tb-clear {
+	padding: 1px 8px;
+	font-weight: 700;
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	border-radius: 999px;
+}
+
+.theme-retro .tb-clear:hover {
+	color: var(--retro-paper, #f0e8d8);
+	background: var(--retro-ink, #2b2b2b);
+}
+
+/* The whole board sits on the panel's paper, so nothing shows through. */
+.theme-retro .tb-board {
+	background: transparent;
+}

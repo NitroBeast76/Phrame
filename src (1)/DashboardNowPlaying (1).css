@@ -1,0 +1,203 @@
+/* The now-playing card, in the same family as the weather, profile and clock cards: a tag on top,
+   a big record whose label is the cover, the title and artist, and tile buttons. Loaded after
+   DashboardSkin.css. */
+
+.dash-card.dash-media {
+	gap: 6px;
+	padding: 8px 10px 10px;
+}
+
+/* ---- "Now playing" tag, like the greeting tag on the profile card. The diamond is the one the
+   clock uses; it turns accent while the music plays. ---- */
+.dash-np-tag {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 8px 2px;
+	font-size: 7px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	line-height: 1;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+	border: 1.5px solid currentColor;
+	border-radius: 999px;
+}
+
+.dash-np-tag::before {
+	content: "";
+	width: 5px;
+	height: 5px;
+	background: currentColor;
+	transform: rotate(45deg);
+}
+
+.dash-np-tag.on {
+	color: var(--bloom-text, white);
+}
+
+.dash-np-tag.on::before {
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+/* ---- The record. The black disc with grooves stays still; the cover is its label and turns
+   on top of it (the turning itself is in Dashboard.tsx). A soft shine and the spindle hole sit
+   above. Change 112px for a bigger or smaller record and 26px (the padding) for a bigger or
+   smaller label. ---- */
+.dash-card.dash-media .dash-art {
+	position: relative;
+	width: 112px;
+	height: 112px;
+	flex: none;
+	box-sizing: border-box;
+	padding: 26px;
+	border: 2px solid currentColor;
+	border-radius: 50%;
+	overflow: hidden;
+	background: repeating-radial-gradient(circle at center, #1a1512 0 2px, #261e19 2px 3px);
+}
+
+.dash-card.dash-media .dash-art img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 50%;
+}
+
+.dash-card.dash-media .dash-art::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border-radius: 50%;
+	pointer-events: none;
+	background: conic-gradient(
+		from 20deg,
+		transparent 0,
+		rgba(255, 255, 255, 0.16) 4%,
+		transparent 20%,
+		transparent 50%,
+		rgba(255, 255, 255, 0.16) 54%,
+		transparent 70%
+	);
+}
+
+.dash-card.dash-media .dash-art::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	z-index: 2;
+	width: 8px;
+	height: 8px;
+	margin: -4px 0 0 -4px;
+	border-radius: 50%;
+	background: var(--bloom-bg-expanded, #1a1512);
+	box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.35);
+}
+
+/* ---- Title and artist (the artist as a small caps line) ---- */
+.dash-np-plate {
+	width: 100%;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1px;
+	text-align: center;
+}
+
+.dash-card.dash-media .dash-media-title {
+	max-width: 100%;
+	line-height: 1.15;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dash-card.dash-media .dash-media-artist {
+	max-width: 100%;
+	font-size: 8.5px;
+	letter-spacing: 0.14em;
+	line-height: 1.2;
+	text-transform: uppercase;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+/* ---- Buttons: small tiles, and the play button in the accent colour, like the AM / PM switch ---- */
+.dash-card.dash-media .dash-media-controls {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	margin-top: 2px;
+}
+
+.dash-card.dash-media .dash-media-controls button {
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	color: inherit;
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+	border: 0;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.dash-card.dash-media .dash-media-controls button.main {
+	width: 32px;
+	height: 32px;
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-accent, #ff9f0a);
+	border-radius: 50%;
+}
+
+/* ---- Retro: ink, paper and accent, with the hard shadow ---- */
+.theme-retro .dash-np-tag {
+	color: var(--retro-ink-muted, #6b5a4b);
+	background: var(--retro-paper, #f0e8d8);
+}
+
+.theme-retro .dash-np-tag.on {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+}
+
+.theme-retro .dash-np-tag.on::before {
+	background: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-card.dash-media .dash-art {
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-card.dash-media .dash-media-title {
+	color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-card.dash-media .dash-media-artist {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .dash-card.dash-media .dash-media-controls button {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+	box-shadow: 1.5px 1.5px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-card.dash-media .dash-media-controls button.main {
+	background: var(--retro-accent, #cbb752);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+}

@@ -1,0 +1,27 @@
+/* Theme changes fade instead of jumping, like the notch (which transitions its background and text colour
+   over 0.3s). The bar, its popups and the top strip are drawn from CSS variables, some of them inside
+   gradients, and a plain variable cannot be transitioned. Registering the three colours as real <color>
+   properties lets the browser blend them, and everything that reads them (var(...), color-mix, the curved
+   corner gradients) follows on every frame. The initial values are the same defaults the rules already use. */
+@property --bloom-bg-expanded {
+	syntax: "<color>";
+	inherits: true;
+	initial-value: rgba(0, 0, 0, 0.92);
+}
+@property --bloom-text {
+	syntax: "<color>";
+	inherits: true;
+	initial-value: #ffffff;
+}
+@property --bloom-outline {
+	syntax: "<color>";
+	inherits: true;
+	initial-value: transparent;
+}
+/* The theme sets these on the root element, so the transition lives there (and only there). */
+:root {
+	transition:
+		--bloom-bg-expanded 0.3s ease,
+		--bloom-text 0.3s ease,
+		--bloom-outline 0.3s ease;
+}

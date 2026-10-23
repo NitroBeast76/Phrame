@@ -1,0 +1,171 @@
+/* Extra layers of the Media tab backdrop (MediaBackdrop.tsx): map blocks, river, glass panels,
+   bubbles, lenses, console text and the third line on the tag cards. Every colour comes from the
+   pywal palette through the --retro-* variables (theme.ts), so it follows the wallpaper. Each layer
+   is kept faint on purpose; raise the opacity numbers for more, lower them for less. */
+.mt-bgart {
+	--bd-ink: var(--retro-ink, #2b2b2b);
+	--bd-paper: var(--retro-paper, #f2efe6);
+	/* If the retro palette is not set, fall back to the tab's own accent (the amber of the disk and
+	   controls) instead of a fixed teal, so the backdrop never clashes with the rest of the tab. */
+	--bd-accent: var(--retro-accent, var(--bloom-accent, #ff9f0a));
+	--bd-deep: var(--retro-accent-deep, var(--bloom-accent, #ff9f0a));
+	/* How strong the extra layers below are, 0 (gone) to 1 (full). Lower it to calm the backdrop. */
+	--bd-strength: 0.5;
+	/* The whole backdrop fades out toward its edges. This is one oval gradient (cheaper to draw than
+	   the two crossed gradients it replaced): the number is how far out from the centre it stays at
+	   full strength, 100% being the edge. Lower it for a softer, smaller field. */
+	--bd-fade-start: 70%;
+	-webkit-mask-image: radial-gradient(ellipse closest-side at 50% 50%, #000 var(--bd-fade-start), transparent 100%);
+	-webkit-mask-composite: source-in;
+	mask-image: radial-gradient(ellipse closest-side at 50% 50%, #000 var(--bd-fade-start), transparent 100%);
+	mask-composite: intersect;
+}
+
+.mt-bg-map,
+.mt-bg-glass,
+.mt-bg-bubbles,
+.mt-bg-lenses,
+.mt-bg-term {
+	opacity: var(--bd-strength);
+}
+
+/* ---- Map ---- */
+.mt-bg-block.tone-0 {
+	fill: var(--bd-paper);
+	opacity: 0.05;
+}
+
+.mt-bg-block.tone-1 {
+	fill: var(--bd-accent);
+	opacity: 0.09;
+}
+
+.mt-bg-block.tone-2 {
+	fill: var(--bd-deep);
+	opacity: 0.1;
+}
+
+.mt-bg-river {
+	stroke: var(--bd-accent);
+	stroke-width: 30;
+	stroke-linecap: round;
+	opacity: 0.12;
+}
+
+.mt-bg-river-core {
+	stroke: var(--bd-paper);
+	stroke-width: 10;
+	stroke-linecap: round;
+	opacity: 0.07;
+}
+
+.mt-bg-street {
+	stroke: var(--bd-paper);
+	stroke-width: 0.8;
+	stroke-linejoin: round;
+	vector-effect: non-scaling-stroke;
+	opacity: 0.12;
+}
+
+/* ---- Glass panels ---- */
+.mt-bg-glass path {
+	fill: var(--bd-paper);
+	fill-opacity: 0.045;
+	stroke: var(--bd-paper);
+	stroke-opacity: 0.18;
+	stroke-width: 1;
+	vector-effect: non-scaling-stroke;
+}
+
+/* ---- Bubbles ---- */
+.mt-bg-bubble {
+	fill: var(--bd-accent);
+	fill-opacity: 0.2;
+	stroke: var(--bd-deep);
+	stroke-opacity: 0.35;
+	stroke-width: 0.8;
+	vector-effect: non-scaling-stroke;
+}
+
+.mt-bg-bubble-hi {
+	fill: var(--bd-paper);
+	fill-opacity: 0.14;
+}
+
+/* ---- Glass lenses: a ring, a dashed inner ring, four ticks and a dot ---- */
+.mt-bg-lens,
+.mt-bg-lens-in,
+.mt-bg-lens-tick {
+	fill: none;
+	stroke: var(--bd-paper);
+	stroke-width: 0.9;
+	vector-effect: non-scaling-stroke;
+}
+
+.mt-bg-lens {
+	stroke-opacity: 0.34;
+}
+
+.mt-bg-lens-in {
+	stroke-opacity: 0.26;
+	stroke-dasharray: 2 2.4;
+}
+
+.mt-bg-lens-tick {
+	stroke-opacity: 0.4;
+}
+
+.mt-bg-lens-dot {
+	fill: var(--bd-paper);
+	fill-opacity: 0.4;
+}
+
+/* ---- Console text ---- */
+.mt-bg-term text {
+	font-family: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+	font-size: 5.4px;
+	letter-spacing: 0.04em;
+	fill: var(--bd-paper);
+	fill-opacity: 0.32;
+}
+
+/* ---- Third line on the tag cards (the colour is set in MediaBackdrop.tsx) ---- */
+.mt-bg-tag-meta {
+	font-family: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+	font-size: 4.4px;
+	letter-spacing: 0.04em;
+}
+
+/* ---- Detail switch. App.tsx sets data-mt-backdrop-detail on the root from the setting
+   "bloom-media-backdrop-detail". When it is off, everything added on top of the original
+   backdrop is hidden and the tag cards go back to their two-line size. ---- */
+:root[data-mt-backdrop-detail="off"] .mt-bg-map,
+:root[data-mt-backdrop-detail="off"] .mt-bg-glass,
+:root[data-mt-backdrop-detail="off"] .mt-bg-bubbles,
+:root[data-mt-backdrop-detail="off"] .mt-bg-lenses,
+:root[data-mt-backdrop-detail="off"] .mt-bg-term,
+:root[data-mt-backdrop-detail="off"] .mt-bg-tag-meta {
+	display: none;
+}
+
+:root[data-mt-backdrop-detail="off"] .mt-bg-tag-box {
+	height: 20px;
+}
+
+/* Fade in when the backdrop is mounted a moment after the tab opens (see Smooth Open in
+   MediaTab.tsx). Only the starting state is set, so the normal opacity afterwards is untouched. */
+.mt-bgart {
+	animation: mt-bgart-in 0.4s ease-out backwards;
+}
+
+@keyframes mt-bgart-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mt-bgart {
+		animation: none;
+	}
+}

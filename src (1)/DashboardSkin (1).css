@@ -1,0 +1,419 @@
+/* Dashboard cards in one family: the weather card in the reference's layout, plus the small
+   tiles and pills the reference uses for icons and tags. Loaded after Dashboard.css. */
+
+/* ---- Weather card ---- */
+.dash-card.dash-weather {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 8px 12px;
+}
+
+.dash-card.dash-weather .dash-weather-text {
+	align-items: flex-start;
+	gap: 1px;
+	min-width: 0;
+}
+
+.dash-weather-label {
+	max-width: 100%;
+	font-size: 8.5px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.dash-card.dash-weather .dash-weather-temp {
+	display: flex;
+	align-items: flex-start;
+	gap: 3px;
+	font-size: 26px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+/* The unit sits in a small circle next to the number. */
+.dash-weather-unit {
+	width: 18px;
+	height: 18px;
+	margin-top: 1px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	font-size: 8px;
+	font-weight: 700;
+	line-height: 1;
+	border: 1.5px solid currentColor;
+	border-radius: 50%;
+}
+
+/* Today's high and low, stacked beside the unit, like the reference. */
+.dash-weather-range {
+	margin-left: 3px;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	font-size: 8.5px;
+	font-weight: 700;
+	line-height: 1.15;
+	letter-spacing: 0;
+	font-variant-numeric: tabular-nums;
+}
+
+.dash-weather-range span {
+	display: inline-flex;
+	align-items: center;
+	gap: 1px;
+}
+
+.dash-weather-place {
+	max-width: 100%;
+	margin-top: 3px;
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	padding: 1px 7px 1px 5px;
+	box-sizing: border-box;
+	font-size: 8.5px;
+	line-height: 1.3;
+	border-radius: 999px;
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+}
+
+.dash-weather-place svg {
+	flex-shrink: 0;
+}
+
+.dash-weather-place span {
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dash-weather-badge {
+	width: 46px;
+	height: 46px;
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	border: 2px solid currentColor;
+	border-radius: 50%;
+}
+
+/* ---- Retro: tiles, pills and badges in ink and accent ---- */
+.theme-retro .dash-card.dash-weather .dash-weather-label {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .dash-card.dash-weather .dash-weather-temp {
+	color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-weather-unit {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+	border-color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-weather-range svg {
+	color: var(--retro-accent-deep, #8a7a2e);
+}
+
+.theme-retro .dash-weather-place {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-weather-badge {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border-color: var(--retro-ink, #2b2b2b);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+}
+
+/* The small icons on the profile card and under the bars become tiles. */
+.theme-retro .dash-profile-lines svg {
+	box-sizing: content-box;
+	width: 12px;
+	height: 12px;
+	padding: 1px;
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+	border-radius: 6px;
+}
+
+.theme-retro .dash-bar-col svg {
+	box-sizing: content-box;
+	width: 12px;
+	height: 12px;
+	padding: 1px;
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+	border-radius: 5px;
+}
+
+/* AM / PM is a small pill, like the one on the clock in the reference. */
+.theme-retro .dash-ampm {
+	padding: 1px 6px;
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+	border-radius: 999px;
+}
+
+/* ---- Profile card: name and handle, a greeting tag and two small stat tiles ---- */
+.dash-card.dash-profile {
+	gap: 10px;
+	padding: 8px 10px;
+}
+
+.dash-id {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.dash-id-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	min-width: 0;
+}
+
+.dash-id-name {
+	min-width: 0;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dash-id-greet {
+	flex-shrink: 0;
+	padding: 2px 5px 1px;
+	font-size: 6px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	line-height: 1;
+	text-transform: uppercase;
+	white-space: nowrap;
+	border: 1.5px solid currentColor;
+	border-radius: 999px;
+}
+
+.dash-id-handle {
+	font-size: 9px;
+	line-height: 1.2;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.dash-id-tiles {
+	display: flex;
+	gap: 5px;
+	margin-top: 4px;
+}
+
+.dash-id-tile {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1px;
+	box-sizing: border-box;
+	padding: 3px 4px 2px;
+	line-height: 1.1;
+	border-radius: 8px;
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+}
+
+.dash-id-tile i {
+	font-style: normal;
+	font-size: 6px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.dash-id-tile b {
+	max-width: 100%;
+	font-size: 9.5px;
+	font-weight: 700;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* ---- Clock card: flip tiles, diamonds, and an AM / PM switch ---- */
+.dash-card.dash-clock {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+	padding: 6px;
+}
+
+.dash-clk-date {
+	font-size: 7px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	line-height: 1;
+	text-transform: uppercase;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.dash-clk-date b {
+	font-size: 8px;
+	color: var(--bloom-text, white);
+}
+
+.dash-clk-tile {
+	position: relative;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: 5px 0;
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	border-radius: 10px;
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+}
+
+/* The seam across the middle of a flip tile. */
+.dash-clk-tile::after {
+	content: "";
+	position: absolute;
+	left: 4px;
+	right: 4px;
+	top: 50%;
+	height: 1px;
+	background: currentColor;
+	opacity: 0.2;
+}
+
+.dash-clk-dots {
+	display: flex;
+	gap: 5px;
+}
+
+.dash-clk-dots i {
+	width: 5px;
+	height: 5px;
+	background: var(--bloom-accent, #ff9f0a);
+	transform: rotate(45deg);
+}
+
+.dash-clk-ampm {
+	width: 100%;
+	display: flex;
+	box-sizing: border-box;
+	overflow: hidden;
+	font-size: 7px;
+	letter-spacing: 0.08em;
+	line-height: 1;
+	border: 1.5px solid currentColor;
+	border-radius: 999px;
+}
+
+.dash-clk-ampm b {
+	flex: 1;
+	padding: 3px 0 2px;
+	text-align: center;
+	font-weight: 700;
+	opacity: 0.5;
+}
+
+.dash-clk-ampm b.on {
+	opacity: 1;
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+/* ---- Retro: the same cards in ink, paper and accent ---- */
+.theme-retro .dash-card.dash-profile .dash-avatar {
+	border-radius: 14px;
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-id-name {
+	color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-id-handle,
+.theme-retro .dash-id-tile i,
+.theme-retro .dash-clk-date {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .dash-id-greet {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+}
+
+.theme-retro .dash-id-tile {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+	box-shadow: 1.5px 1.5px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-clk-date b {
+	color: var(--retro-ink, #2b2b2b);
+}
+
+/* Hours on a dark tile, minutes on an accent one, as in the reference. */
+.theme-retro .dash-clk-tile {
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-clk-tile.hours {
+	color: var(--retro-paper, #f0e8d8);
+	background: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-clk-tile.mins {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+}
+
+.theme-retro .dash-clk-dots i {
+	background: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-clk-ampm {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border-color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-clk-ampm b.on {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+}

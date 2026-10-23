@@ -1,0 +1,27 @@
+/* The music notes that come out of the album disk on the dashboard's now-playing card when it is
+   pressed (diskNotes.ts). Each note is a small SVG that diskNotes.ts moves with the Web Animations
+   API, so there is nothing to blur or repaint: only position, rotation and fade. */
+.dn-note {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 18px;
+	height: 18px;
+	margin: -9px 0 0 -9px;
+	z-index: 20;
+	pointer-events: none;
+	opacity: 0;
+	color: var(--bloom-accent, #ff9f0a);
+	will-change: transform, opacity;
+}
+
+.dn-note svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.4;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}

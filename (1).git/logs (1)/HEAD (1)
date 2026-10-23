@@ -1,0 +1,5 @@
+b139f01c5c7a0e52c6986717bfbbb1d9ce78e068 fce642cde5eb86177e6d204a4df7615c8148d20c HP <hp@example.com> 1791712962 +0700	checkout: moving from main to restored-from-patch
+fce642cde5eb86177e6d204a4df7615c8148d20c 33f3d8a9ae1c0020a28e68bc17b63d25b89f96e9 HP <hp@example.com> 1791713030 +0700	commit: restored from bloom-all.patch
+33f3d8a9ae1c0020a28e68bc17b63d25b89f96e9 0000000000000000000000000000000000000000 HP <hp@example.com> 1791713228 +0700	Branch: renamed refs/heads/restored-from-patch to refs/heads/main
+0000000000000000000000000000000000000000 33f3d8a9ae1c0020a28e68bc17b63d25b89f96e9 HP <hp@example.com> 1791713228 +0700	Branch: renamed refs/heads/restored-from-patch to refs/heads/main
+33f3d8a9ae1c0020a28e68bc17b63d25b89f96e9 33f3d8a9ae1c0020a28e68bc17b63d25b89f96e9 HP <hp@example.com> 1791792320 +0700	reset: moving to HEAD

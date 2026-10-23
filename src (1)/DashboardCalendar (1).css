@@ -1,0 +1,284 @@
+/* Dashboard calendar card: a date header, a pill for the weekdays, soft bands for the weekend
+   columns and the current week, and a raised tile for today. Everything is scoped to
+   .dash-calendar, so the full-size calendar keeps its own look. Loaded after Dashboard.css. */
+
+.dash-calendar {
+	padding: 6px 8px 7px;
+}
+
+/* ---- Header: today's date tile, the month with a year pill, and week / days left ---- */
+.dash-calendar .calendar-header.dash-cal-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 4px;
+	text-align: left;
+}
+
+.dash-cal-tile {
+	width: 30px;
+	height: 27px;
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1px;
+	box-sizing: border-box;
+	line-height: 1;
+	border-radius: 8px;
+	border: 1.5px solid var(--bloom-accent, #ff9f0a);
+	border-bottom-width: 3px;
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 14%, transparent);
+}
+
+.dash-cal-tile i {
+	font-style: normal;
+	font-size: 6px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.dash-cal-tile b {
+	font-size: 13px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+.dash-cal-title {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.dash-cal-month {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1.1;
+	color: var(--bloom-text, white);
+}
+
+.dash-cal-year {
+	padding: 1px 6px;
+	font-style: normal;
+	font-size: 7.5px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	line-height: 1.2;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--bloom-text, white) 14%, transparent);
+}
+
+.dash-cal-sub {
+	font-size: 8px;
+	line-height: 1.1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+/* ---- Grid: bands sit behind the cells, on an overlay grid with the same rows ---- */
+.dash-calendar .calendar-grid {
+	position: relative;
+}
+
+.dash-calendar .cal-bands {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	pointer-events: none;
+}
+
+.dash-calendar .cal-bands i {
+	display: block;
+}
+
+/* The pill behind the weekday letters. */
+.dash-calendar .cal-band-names {
+	margin: 2px 0;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--bloom-text, white) 10%, transparent);
+}
+
+.dash-calendar .cal-band-we {
+	margin: 0 2px;
+	border-radius: 9px;
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 9%, transparent);
+}
+
+/* Today's week, as a row across the grid. */
+.dash-calendar .cal-band-week {
+	margin: 1px 0;
+	border-radius: 9px;
+	background: color-mix(in srgb, var(--bloom-text, white) 9%, transparent);
+}
+
+.dash-calendar .day-name,
+.dash-calendar .calendar-day {
+	position: relative;
+	z-index: 1;
+}
+
+.dash-calendar .day-name {
+	font-size: 7.5px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.dash-calendar .day-name.weekend {
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+/* The weekday of today's column is a filled pill. */
+.dash-calendar .day-name.now {
+	justify-self: center;
+	align-self: center;
+	padding: 1px 6px;
+	line-height: 1.2;
+	border-radius: 999px;
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-text, white);
+}
+
+/* ---- Day cells ---- */
+.dash-calendar .calendar-day {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	font-size: 9.5px;
+	font-weight: 700;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	color: var(--bloom-text, white);
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	border-radius: 6px;
+	transition: background 0.12s ease;
+}
+
+.dash-calendar .calendar-day.weekend {
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+.dash-calendar .calendar-day:not(.outside):not(.today):hover {
+	background: color-mix(in srgb, var(--bloom-text, white) 14%, transparent);
+}
+
+/* Days of the previous and next month. */
+.dash-calendar .calendar-day.outside {
+	font-weight: 600;
+	cursor: default;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+	opacity: 0.4;
+}
+
+/* A day with a note: tinted, with a ring in the accent. */
+.dash-calendar .calendar-day.has-note {
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 16%, transparent);
+	box-shadow: inset 0 0 0 1.25px color-mix(in srgb, var(--bloom-accent, #ff9f0a) 80%, transparent);
+}
+
+/* Today: a raised tile. */
+.dash-calendar .calendar-day.today {
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-text, white);
+	box-shadow: 0 1.5px 0 color-mix(in srgb, var(--bloom-text, white) 45%, transparent);
+}
+
+.dash-calendar .calendar-day.today.has-note {
+	box-shadow:
+		inset 0 0 0 1.5px var(--bloom-accent, #ff9f0a),
+		0 1.5px 0 color-mix(in srgb, var(--bloom-text, white) 45%, transparent);
+}
+
+/* The day whose note is open. */
+.dash-calendar .calendar-day.selected {
+	box-shadow: 0 0 0 1.5px var(--bloom-accent, #ff9f0a);
+}
+
+/* ---- Retro: ink outlines, paper and accent, like the other dashboard cards ---- */
+.theme-retro .dash-cal-tile {
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	box-shadow: 1.5px 1.5px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-cal-tile i {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .dash-cal-tile b,
+.theme-retro .dash-cal-month {
+	color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-cal-year {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-cal-sub,
+.theme-retro .dash-calendar .day-name {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .dash-calendar .cal-band-names {
+	background: var(--retro-paper, #f0e8d8);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-calendar .cal-band-we {
+	background: color-mix(in srgb, var(--retro-accent, #cbb752) 30%, transparent);
+}
+
+.theme-retro .dash-calendar .cal-band-week {
+	background: color-mix(in srgb, var(--retro-ink, #2b2b2b) 10%, transparent);
+}
+
+.theme-retro .dash-calendar .day-name.weekend,
+.theme-retro .dash-calendar .calendar-day.weekend {
+	color: var(--retro-accent-deep, #8a7a2e);
+}
+
+.theme-retro .dash-calendar .day-name.now {
+	color: var(--retro-paper, #f0e8d8);
+	background: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-calendar .calendar-day {
+	color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-calendar .calendar-day.outside {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .dash-calendar .calendar-day.has-note {
+	background: var(--retro-paper, #f0e8d8);
+	box-shadow: inset 0 0 0 1.5px var(--retro-accent-deep, #8a7a2e);
+}
+
+.theme-retro .dash-calendar .calendar-day.today,
+.theme-retro .dash-calendar .calendar-day.today.has-note {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+	box-shadow: 1.5px 1.5px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-calendar .calendar-day.selected {
+	box-shadow: 0 0 0 1.5px var(--retro-ink, #2b2b2b);
+}

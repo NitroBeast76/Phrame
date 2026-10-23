@@ -1,0 +1,32 @@
+/* Long lists scroll with the wheel (DashTabs in Dashboard.tsx leaves the wheel to a list that has
+   more than fits). A thin accent bar shows there is more, like the one on the volume mixer.
+   Applies to the open windows and to the sound outputs in the media tab. */
+
+.dash-wn .dash-scroll,
+.mt-out-body .mt-out-list {
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-width: thin;
+	scrollbar-color: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 55%, transparent) transparent;
+}
+
+/* Keeps the bar off the close buttons. */
+.dash-wn .dash-scroll {
+	padding-right: 4px;
+}
+
+/* The sound outputs share the height as before while they fit; with more devices every row keeps
+   at least 44px and the list scrolls, instead of the rows being squeezed. */
+.mt-out-body .mt-out-list {
+	display: grid;
+	grid-template-rows: none;
+	grid-auto-rows: minmax(44px, 1fr);
+	align-content: start;
+	padding-right: 4px;
+}
+
+.theme-retro .dash-wn .dash-scroll,
+.theme-retro .mt-out-body .mt-out-list {
+	scrollbar-color: var(--retro-ink, #2b2b2b) transparent;
+}

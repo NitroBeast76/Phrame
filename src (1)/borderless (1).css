@@ -1,0 +1,50 @@
+/* Borderless look.
+   Matches the Dashboard "Performance" cards: surfaces are told apart by their fill
+   alone, with no outlines or divider lines. Borders are made transparent rather
+   than removed, so no element changes size or shifts by a pixel.
+   The :root prefix makes these win over the base rules whatever the load order.
+   To bring borders back, delete the `import "./borderless.css"` lines in App.tsx
+   and Overlay.tsx. (Task board, dashboard and colour picker borders are removed
+   in their own files.) */
+
+/* Notch: bottom bar, performance card, album art */
+:root .bottom-row,
+:root .light-mode .bottom-row {
+	border-top-color: transparent;
+}
+
+:root .perf-card {
+	border-color: transparent;
+}
+
+:root .premium-album-art {
+	border-color: transparent;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Control center: round buttons and audio output list (the four big tiles keep
+   their original borders) */
+:root .cc-circular-btn,
+:root .cc-circular-btn.active,
+:root .cc-audio-close,
+:root .cc-audio-item,
+:root .cc-audio-item.active {
+	border-color: transparent;
+}
+
+/* Volume and brightness HUDs: no card border, and no outline on the rounded
+   corners where the card meets the screen edge */
+:root .volume-notch,
+:root .volume-notch.right,
+:root .brightness-notch {
+	border-color: transparent;
+}
+
+:root .volume-notch-flares::before,
+:root .volume-notch-flares::after,
+:root .volume-notch-flares.right::before,
+:root .volume-notch-flares.right::after,
+:root .brightness-notch::before,
+:root .brightness-notch::after {
+	background: var(--bloom-bg, rgba(0, 0, 0, 0.8));
+}

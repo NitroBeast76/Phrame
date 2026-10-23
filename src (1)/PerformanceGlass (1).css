@@ -1,0 +1,202 @@
+/* Performance tab as frosted glass: every card is a pale translucent panel with a thin edge and one
+   or two cut corners (the same glass as the profile and windows tabs), on a faint graph-paper
+   backdrop. Meters stay plain bars and arcs.
+   Only the adaptive (non-retro) look changes; the retro look in Performance.css is not touched.
+   The weather icon on the dashboard tab switches it off and on (glassMode.ts puts .dash-classic on
+   <html> for the classic look). Loaded after PerformanceSkin.css. Flat on purpose: no blur, no looping animation. */
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) {
+	--pg-edge: color-mix(in srgb, var(--bloom-text, white) 20%, transparent);
+	--pg-line: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 65%, transparent);
+	--pg-grid: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 13%, transparent);
+	--pg-glass: color-mix(in srgb, var(--bloom-bg-expanded, #1b1b1b) 68%, transparent);
+	--pg-tint-hi: color-mix(in srgb, var(--bloom-text, white) 10%, transparent);
+	--pg-tint-lo: color-mix(in srgb, var(--bloom-text, white) 3%, transparent);
+	--pg-cut: 12px;
+	/* The edge along a cut corner: one line for each diagonal. */
+	--pg-diag-up: linear-gradient(
+		to top right,
+		transparent calc(50% - 1px),
+		var(--pg-edge) calc(50% - 1px) calc(50% + 0.5px),
+		transparent calc(50% + 0.5px)
+	);
+	--pg-diag-down: linear-gradient(
+		to bottom right,
+		transparent calc(50% - 1px),
+		var(--pg-edge) calc(50% - 1px) calc(50% + 0.5px),
+		transparent calc(50% + 0.5px)
+	);
+}
+
+/* ---- Backdrop: graph paper that fades toward the edges, behind the cards ---- */
+.pf-grid:not(:where(.theme-retro *, .dash-classic *))::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	background-image:
+		linear-gradient(var(--pg-grid) 1px, transparent 1px),
+		linear-gradient(90deg, var(--pg-grid) 1px, transparent 1px);
+	background-size: 28px 28px;
+	background-position: center;
+	-webkit-mask-image: radial-gradient(ellipse 90% 100% at 50% 50%, #000 45%, rgba(0, 0, 0, 0.2) 100%);
+	mask-image: radial-gradient(ellipse 90% 100% at 50% 50%, #000 45%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-row {
+	position: relative;
+	z-index: 1;
+}
+
+/* ---- The glass ---- */
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-card {
+	position: relative;
+	border-radius: 0;
+	border: 1px solid var(--pg-edge);
+	background:
+		linear-gradient(135deg, var(--pg-tint-hi), var(--pg-tint-lo)),
+		var(--pg-glass);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-card::before,
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-card::after {
+	content: "";
+	position: absolute;
+	width: var(--pg-cut);
+	height: var(--pg-cut);
+	pointer-events: none;
+}
+
+/* ---- The shapes: the top cards are cut on their outer corners, the network card on a diagonal ---- */
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-row.top > .pf-card:nth-child(1) {
+	clip-path: polygon(var(--pg-cut) 0, 100% 0, 100% 100%, 0 100%, 0 var(--pg-cut));
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-row.top > .pf-card:nth-child(1)::after {
+	top: 0;
+	left: 0;
+	background: var(--pg-diag-down);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-row.top > .pf-card:nth-child(2),
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-memory {
+	clip-path: polygon(0 0, calc(100% - var(--pg-cut)) 0, 100% var(--pg-cut), 100% 100%, 0 100%);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-row.top > .pf-card:nth-child(2)::after,
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-memory::after {
+	top: 0;
+	right: 0;
+	background: var(--pg-diag-up);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-storage {
+	clip-path: polygon(0 0, 100% 0, 100% 100%, var(--pg-cut) 100%, 0 calc(100% - var(--pg-cut)));
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-storage::after {
+	bottom: 0;
+	left: 0;
+	background: var(--pg-diag-up);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-network {
+	clip-path: polygon(
+		var(--pg-cut) 0,
+		100% 0,
+		100% calc(100% - var(--pg-cut)),
+		calc(100% - var(--pg-cut)) 100%,
+		0 100%,
+		0 var(--pg-cut)
+	);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-network::before {
+	top: 0;
+	left: 0;
+	background: var(--pg-diag-down);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-network::after {
+	bottom: 0;
+	right: 0;
+	background: var(--pg-diag-down);
+}
+
+/* ---- Section names: a small caps label with a diamond over a hairline (no outlined pill) ---- */
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-heading,
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-memory .pf-heading {
+	align-self: stretch;
+	padding-bottom: 5px;
+	border-bottom: 1px solid var(--pg-edge);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-heading .pf-title,
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-storage-text .pf-title {
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	letter-spacing: 0.2em;
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-storage-text .pf-title {
+	display: flex;
+	padding-bottom: 4px;
+	border-bottom: 1px solid var(--pg-edge);
+}
+
+/* ---- Small parts: square-edged, to go with the cut corners. The chips and the bar track keep the
+   tan fill (--bloom-border) from the skin, as in the classic look. ---- */
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-temp > svg,
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-net-row svg {
+	border-radius: 2px;
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-temp-value {
+	padding: 1px 6px 0;
+	border: 1px solid var(--pg-edge);
+	border-radius: 2px;
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-bar {
+	height: 4px;
+	border-radius: 0;
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-bar-fill {
+	border-radius: 0;
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-detail {
+	border: 1px solid var(--pg-edge);
+	border-radius: 2px;
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-drive,
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-drive-chevron {
+	border: 1px solid var(--pg-edge);
+	border-radius: 2px;
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-drive:hover,
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-drive-chevron:hover {
+	border-color: var(--pg-line);
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 16%, transparent);
+}
+
+/* ---- Network: a baseline under the graph ---- */
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-spark {
+	border-bottom: 1px solid var(--pg-edge);
+}
+
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-spark-area {
+	opacity: 0.16;
+}
+
+/* ---- The storage details cover the glass card, so they get the same edge ---- */
+.pf-grid:not(:where(.theme-retro *, .dash-classic *)) .pf-store-panel {
+	border: 1px solid var(--pg-edge);
+	border-radius: 0;
+	background: color-mix(in srgb, var(--bloom-bg-expanded, #1d1917) 94%, transparent);
+}

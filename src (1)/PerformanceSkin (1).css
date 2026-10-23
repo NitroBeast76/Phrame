@@ -1,0 +1,504 @@
+/* Performance tab in the dashboard's style (small caps tags with a diamond, icons in tiles, outlined
+   pills, tan fills), plus the small window that pops up beside the storage or memory gauge when it
+   is clicked.
+   Flat on purpose: no glows, filters, blurs or looping animations, so it stays light.
+   The skin rules start with the scope below, which only matches when the tab is not inside
+   .theme-retro, so the retro look in Performance.css is not touched. Loaded after Performance.css. */
+
+/* ---- Structure (all themes): the tab is the window's frame, the gauges are the click targets ---- */
+.pf-grid {
+	position: relative;
+}
+
+.pf-hit {
+	cursor: pointer;
+}
+
+.pf-hit:focus-visible {
+	outline: none;
+}
+
+/* Hover: only when the pointer is on the circle itself (not the text beside it) the arc grows a
+   little and the percentage inside grows with it. The arc is scaled as a drawing, so it stays
+   sharp, and the percentage grows by its font size instead of being scaled, so it is drawn at the
+   new size and never blurred. */
+.pf-ring > svg {
+	transition: transform 0.18s ease-out;
+}
+
+.pf-ring-num {
+	transition: font-size 0.18s ease-out;
+}
+
+.pf-ring.pf-grow:hover > svg,
+.pf-ring.pf-grow:focus-visible > svg {
+	transform: scale(1.07);
+}
+
+.pf-ring.pf-grow:hover .pf-ring-num,
+.pf-ring.pf-grow:focus-visible .pf-ring-num {
+	font-size: 19px;
+}
+
+/* The storage card is the frame for its details panel. */
+.pf-storage {
+	position: relative;
+}
+
+/* The storage details panel: covers the card from inside, like the calendar's note editor. */
+.pf-store-panel {
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	box-sizing: border-box;
+	padding: 8px 10px 10px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 6px;
+	border-radius: 16px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-bg-expanded, #202020);
+	border: 1.5px solid var(--bloom-border, rgba(255, 255, 255, 0.14));
+}
+
+.pf-store-meter {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.pf-store-meter b {
+	min-width: 28px;
+	text-align: right;
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+}
+
+.pf-store-tiles {
+	display: flex;
+	gap: 4px;
+}
+
+.pf-store-tiles .pf-pop-tile {
+	flex: 1;
+	min-width: 0;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1px;
+	padding: 3px 4px 2px;
+}
+
+/* Invisible layer under the window: a click anywhere else closes it. */
+.pf-pop-backdrop {
+	position: absolute;
+	inset: 0;
+	z-index: 20;
+}
+
+/* The anchor sits on the card's left or right side (set from the code) at the height of the clicked
+   gauge. It is zero tall and centres the window on that line, so the window needs no transform of
+   its own: the slide-in is done on the anchor in PerformanceTab.tsx (the dashboard's spring). */
+.pf-pop-anchor {
+	position: absolute;
+	z-index: 21;
+	height: 0;
+	display: flex;
+	align-items: center;
+}
+
+.pf-pop {
+	position: relative;
+	width: 196px;
+	box-sizing: border-box;
+	padding: 8px 10px 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	border-radius: 14px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-bg-expanded, #202020);
+	border: 1.5px solid var(--bloom-border, rgba(255, 255, 255, 0.14));
+}
+
+/* A small pointer toward the gauge. --pf-arrow is how far the gauge is from the window's middle. */
+.pf-pop::before {
+	content: "";
+	position: absolute;
+	top: clamp(14px, calc(50% + var(--pf-arrow, 0px)), calc(100% - 14px));
+	width: 8px;
+	height: 8px;
+	margin-top: -4px;
+	background: inherit;
+	border: 1.5px solid var(--bloom-border, rgba(255, 255, 255, 0.14));
+	transform: rotate(45deg);
+}
+
+.pf-pop-anchor.right .pf-pop::before {
+	left: -5px;
+	border-top-color: transparent;
+	border-right-color: transparent;
+}
+
+.pf-pop-anchor.left .pf-pop::before {
+	right: -5px;
+	border-bottom-color: transparent;
+	border-left-color: transparent;
+}
+
+.pf-pop-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.pf-pop-close {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	color: inherit;
+	background: transparent;
+	border: 1.5px solid currentColor;
+	border-radius: 50%;
+}
+
+.pf-pop-body {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+/* In the small window the gauge shows only the percentage. */
+.pf-pop .pf-ring-num {
+	font-size: 13px;
+}
+
+.pf-pop .pf-ring-center svg,
+.pf-pop .pf-ring-label {
+	display: none;
+}
+
+.pf-pop-tiles {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+}
+
+.pf-pop-tile {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	padding: 3px 7px 2px;
+	border-radius: 7px;
+}
+
+.pf-pop-tile i {
+	font-style: normal;
+}
+
+.pf-pop-tile b {
+	font-variant-numeric: tabular-nums;
+}
+
+.pf-pop-action {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 22px;
+	padding: 0 12px;
+	cursor: pointer;
+	font: inherit;
+	color: inherit;
+	background: transparent;
+	border: 1.5px solid currentColor;
+	border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pf-ring > svg,
+	.pf-ring-num {
+		transition: none;
+	}
+}
+
+/* ---- Skin (every theme except retro) ---- */
+
+/* Cards stay flat. */
+.pf-grid:not(:where(.theme-retro *)) .pf-hit:focus-visible {
+	outline: 1.5px solid var(--bloom-accent, #ff9f0a);
+	outline-offset: 3px;
+	border-radius: 14px;
+}
+
+/* Section names are small caps tags with a diamond, like "Now playing" on the dashboard. */
+.pf-grid:not(:where(.theme-retro *)) .pf-heading .pf-title,
+.pf-grid:not(:where(.theme-retro *)) .pf-storage-text .pf-title,
+.pf-grid:not(:where(.theme-retro *)) .pf-pop-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 8px 2px;
+	font-size: 7px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	line-height: 1;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+	border: 1.5px solid currentColor;
+	border-radius: 999px;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-heading .pf-title::before,
+.pf-grid:not(:where(.theme-retro *)) .pf-storage-text .pf-title::before,
+.pf-grid:not(:where(.theme-retro *)) .pf-pop-tag::before {
+	content: "";
+	width: 5px;
+	height: 5px;
+	background: var(--bloom-accent, #ff9f0a);
+	transform: rotate(45deg);
+}
+
+/* Small icons sit in tan tiles, like the icons under the dashboard bars. */
+.pf-grid:not(:where(.theme-retro *)) .pf-heading svg,
+.pf-grid:not(:where(.theme-retro *)) .pf-temp > svg,
+.pf-grid:not(:where(.theme-retro *)) .pf-net-row svg {
+	box-sizing: content-box;
+	flex-shrink: 0;
+	padding: 2px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+	border-radius: 7px;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-heading svg {
+	width: 12px;
+	height: 12px;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-temp > svg {
+	width: 11px;
+	height: 11px;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-net-row svg {
+	width: 10px;
+	height: 10px;
+	border-radius: 6px;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-net-row.down svg {
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+/* CPU and GPU: bold name, a micro label over the usage, the temperature in a pill, a flat bar. */
+.pf-grid:not(:where(.theme-retro *)) .pf-chip .pf-title {
+	font-weight: 700;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-usage-label,
+.pf-grid:not(:where(.theme-retro *)) .pf-ring-label {
+	font-size: 6.5px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-usage-value,
+.pf-grid:not(:where(.theme-retro *)) .pf-ring-num {
+	font-weight: 700;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-temp-value {
+	min-width: 0;
+	padding: 2px 7px 1px;
+	font-size: 10px;
+	font-weight: 700;
+	border-radius: 999px;
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-bar {
+	height: 6px;
+	border-radius: 3px;
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+}
+
+/* Gauges: flat tan track and a flat accent arc. */
+.pf-grid:not(:where(.theme-retro *)) .pf-ring-track {
+	stroke: var(--bloom-border, rgba(255, 255, 255, 0.14));
+}
+
+/* The used / total numbers are a pill. */
+.pf-grid:not(:where(.theme-retro *)) .pf-detail {
+	align-self: flex-start;
+	padding: 2px 8px 1px;
+	font-size: 9.5px;
+	font-weight: 700;
+	line-height: 1.3;
+	border-radius: 999px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-memory .pf-detail {
+	align-self: center;
+}
+
+/* Drive button and chevron: outlined pills, like the AM / PM switch on the clock. */
+.pf-grid:not(:where(.theme-retro *)) .pf-drive,
+.pf-grid:not(:where(.theme-retro *)) .pf-drive-chevron {
+	color: var(--bloom-text, white);
+	background: transparent;
+	border: 1.5px solid currentColor;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-drive {
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	border-radius: 999px;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-drive svg {
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-drive:hover,
+.pf-grid:not(:where(.theme-retro *)) .pf-drive-chevron:hover {
+	background: var(--bloom-border, rgba(255, 255, 255, 0.14));
+}
+
+/* Network: a flat fill under the trace, a dashed upload line, small caps labels. */
+.pf-grid:not(:where(.theme-retro *)) .pf-spark-area {
+	opacity: 0.2;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-spark-up {
+	stroke-dasharray: 3 2;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-net-row span {
+	font-size: 7px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-net-row b {
+	font-size: 10px;
+	font-weight: 700;
+}
+
+/* The window: tag and close button on top, tan tiles with a micro label and a bold value. */
+.pf-grid:not(:where(.theme-retro *)) .pf-pop-tile {
+	background: var(--bloom-border, rgba(255, 255, 255, 0.12));
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-pop-tile i {
+	font-size: 7px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-pop-tile b {
+	font-size: 10px;
+	font-weight: 700;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-pop-close:hover,
+.pf-grid:not(:where(.theme-retro *)) .pf-pop-action:hover {
+	background: var(--bloom-border, rgba(255, 255, 255, 0.14));
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-pop-action {
+	font-size: 8px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.pf-grid:not(:where(.theme-retro *)) .pf-pop-action svg:first-child {
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+/* ---- Retro: only the new window (the rest of the tab keeps its retro skin) ---- */
+.theme-retro .pf-pop {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper-deep, #d9cbb4);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	box-shadow: var(--retro-shadow-sm, 3px 3px 0 var(--retro-ink, #2b2b2b));
+}
+
+.theme-retro .pf-pop-tag {
+	padding: 3px 8px 2px;
+	font-size: 8px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	background: var(--retro-accent, #cbb752);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+	border-radius: 999px;
+}
+
+.theme-retro .pf-pop-tile {
+	background: var(--retro-paper, #f0e8d8);
+	border: 1.5px solid var(--retro-ink, #2b2b2b);
+	box-shadow: 1.5px 1.5px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .pf-pop-tile i {
+	font-size: 7px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .pf-pop-tile b {
+	font-size: 11px;
+}
+
+.theme-retro .pf-store-panel {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper-deep, #d9cbb4);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .pf-pop::before {
+	background: var(--retro-paper-deep, #d9cbb4);
+	border-color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .pf-pop-anchor.right .pf-pop::before {
+	border-top-color: transparent;
+	border-right-color: transparent;
+}
+
+.theme-retro .pf-pop-anchor.left .pf-pop::before {
+	border-bottom-color: transparent;
+	border-left-color: transparent;
+}
+
+.theme-retro .pf-pop-close,
+.theme-retro .pf-pop-action {
+	color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-paper, #f0e8d8);
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .pf-pop-close:hover,
+.theme-retro .pf-pop-action:hover {
+	background: var(--retro-accent, #cbb752);
+}

@@ -1,0 +1,160 @@
+/* Side bar mode: the status row above the panels is not drawn, so every panel starts just under the
+   strip (8px of room) instead of 36px down, and keeps the height it had (the notch is 28px shorter,
+   see SB_BAR_H in App.tsx). Panels are listed one by one: they are all absolutely positioned. */
+.bloom.sb-strip .dash-panel,
+.bloom.sb-strip .tasks-panel,
+.bloom.sb-strip .tg-panel,
+.bloom.sb-strip .wp-panel,
+.bloom.sb-strip .qp,
+.bloom.sb-strip .calendar-timer-content,
+.bloom.sb-strip .command-center-content-minimal,
+.bloom.sb-strip .announcement-content {
+	top: 8px;
+	height: calc(100% - 8px);
+}
+
+/* The wallpaper panel's dark veil and glow reached 36px above the panel to cover the status row. Now they
+   reach up to the top of the notch, and the lit spot (the selected disk) is 8px + 98px from it. */
+.bloom.sb-strip .wp-panel {
+	--wp-spot-y: 106px;
+}
+
+.bloom.sb-strip .wp-panel::after,
+.bloom.sb-strip .wp-panel::before {
+	top: -8px;
+}
+
+/* Concave corner pads in side bar mode. In the reference they are not part of the slide: the notch drops
+   past the strip with square sides, and once it has landed the pads grow out of the strip's underside
+   (App.tsx adds .sb-landed). --sb-dy (set from the notch's y) cancels the open spring's overshoot so the
+   pads stay pinned to the strip while the notch bounces. translate and scale are the separate CSS
+   properties, so the pin follows every frame and only the grow is transitioned. */
+.bloom.sb-strip {
+	--sb-pad-grow: 60ms;
+}
+
+/* The two per-frame values are not inherited: setting them restyles the notch and its pads only, not the
+   whole panel tree inside it (the pads ask for the notch's value explicitly). The notch is also kept on
+   its own layer, so the slide is only a move of that layer. */
+@property --sb-dy {
+	syntax: "<length>";
+	inherits: false;
+	initial-value: 0px;
+}
+@property --sb-up {
+	syntax: "<length>";
+	inherits: false;
+	initial-value: 0px;
+}
+.bloom.sb-strip {
+	will-change: transform;
+}
+.bloom.sb-strip::before,
+.bloom.sb-strip::after {
+	--sb-dy: inherit;
+}
+
+.bloom.sb-strip::before,
+.bloom.sb-strip::after {
+	opacity: 0;
+	scale: 0;
+	translate: 0 var(--sb-dy, 0px);
+	transition: background-color 0.3s ease;
+}
+
+.bloom.sb-strip::before {
+	transform-origin: 100% 0;
+}
+
+.bloom.sb-strip::after {
+	transform-origin: 0 0;
+}
+
+.bloom.sb-strip.sb-landed::before,
+.bloom.sb-strip.sb-landed::after {
+	opacity: 1;
+	scale: 1;
+	transition:
+		scale var(--sb-pad-grow) cubic-bezier(0.2, 0.7, 0.3, 1),
+		background-color 0.3s ease;
+}
+
+/* Open spring overshoot: the notch sinks below its rest spot and would leave a gap under the strip. Its
+   top is stretched up by the overshoot (--sb-up, set from the notch's y) with a shadow of its own
+   colour and width, so it stays joined to the strip while it bounces. */
+.bloom.sb-strip {
+	box-shadow: 0 calc(-1 * var(--sb-up, 0px)) 0 0 var(--notch-bg);
+}
+
+:is(.theme-light, .theme-retro) .bloom.sb-strip.is-impacted {
+	box-shadow:
+		inset 0 -2px 0 0 var(--bloom-outline, rgba(0, 0, 0, 0.3)),
+		0 calc(-1 * max(var(--sb-up, 0px), 2px)) 0 0 var(--notch-bg);
+}
+
+/* Closing: the notch tucks up into the strip while it shrinks, and its concave corner pieces (which stick
+   out past the box) go at once, so nothing is left hanging under the strip. */
+.bloom.sb-closing::before,
+.bloom.sb-closing::after {
+	opacity: 0 !important;
+	transition: none !important;
+}
+
+/* Retro gets the same notch outline the light theme has in App.css (this file loads after it). */
+.theme-retro .bloom {
+	box-shadow: inset 0 0 0 2px var(--bloom-outline, rgba(0, 0, 0, 0.3));
+}
+.theme-retro .bloom.is-impacted {
+	box-shadow: inset 0 -2px 0 0 var(--bloom-outline, rgba(0, 0, 0, 0.3));
+	background:
+		linear-gradient(var(--bloom-outline, rgba(0, 0, 0, 0.3)), var(--bloom-outline, rgba(0, 0, 0, 0.3))) 0 13px / 2px calc(100% - 31px) no-repeat,
+		linear-gradient(var(--bloom-outline, rgba(0, 0, 0, 0.3)), var(--bloom-outline, rgba(0, 0, 0, 0.3))) 100% 13px / 2px calc(100% - 31px) no-repeat,
+		var(--notch-bg);
+}
+.theme-retro .bloom.is-impacted::before {
+	background-image: radial-gradient(circle at 0 13px, transparent 13px, var(--bloom-outline, rgba(0, 0, 0, 0.3)) 13px, var(--bloom-outline, rgba(0, 0, 0, 0.3)) 15px, transparent 15.5px);
+}
+.theme-retro .bloom.is-impacted::after {
+	background-image: radial-gradient(circle at 13px 13px, transparent 13px, var(--bloom-outline, rgba(0, 0, 0, 0.3)) 13px, var(--bloom-outline, rgba(0, 0, 0, 0.3)) 15px, transparent 15.5px);
+}
+
+/* Outline of the concave pads (light and retro). The 13px pad box cut the line short just before it reached the
+   notch's side line, leaving a gap. The pads are 2px wider (over the notch's own edge, where the side line has
+   not started yet) so the arc runs into it. Centres are in px because the width is no longer the radius. */
+:is(.theme-light, .theme-retro) .bloom.is-impacted::before,
+:is(.theme-light, .theme-retro) .bloom.is-impacted::after {
+	width: 15px;
+}
+:is(.theme-light, .theme-retro) .bloom.is-impacted::after {
+	background-image: radial-gradient(circle at 15px 13px, transparent 13px, var(--bloom-outline, rgba(0, 0, 0, 0.3)) 13px, var(--bloom-outline, rgba(0, 0, 0, 0.3)) 15px, transparent 15.5px);
+}
+
+/* The outline of the joined notch (light and retro) is the .sb-notch-ring element, the last child of the notch (App.tsx).
+   Drawn on the notch itself (as an inset shadow or as backgrounds) it was under the panels, which run down to the notch's
+   bottom edge and covered the bottom line. The ring is over them, copies the notch's own corner radius (18px, 28px in
+   some views, animated), so the line is 2px all the way round, and its top 9px are masked off (a few px above where the arcs end, so there is no hairline between them; the arc's outer
+   edge is within 0.6px of the side line from there on) because the concave
+   pads' own arcs carry the line down to there. The top edge has no line: it is part of the frame strip. */
+:is(.theme-light, .theme-retro) .bloom.is-impacted {
+	box-shadow: none;
+	background: var(--notch-bg);
+}
+:is(.theme-light, .theme-retro) .bloom.sb-strip.is-impacted {
+	box-shadow: 0 calc(-1 * max(var(--sb-up, 0px), 2px)) 0 0 var(--notch-bg);
+}
+.sb-notch-ring {
+	display: none;
+}
+:is(.theme-light, .theme-retro) .sb-notch-ring {
+	display: block;
+	position: absolute;
+	inset: 0;
+	box-sizing: border-box;
+	border: 2px solid var(--bloom-outline, rgba(0, 0, 0, 0.3));
+	border-top: 0;
+	border-radius: inherit;
+	pointer-events: none;
+	z-index: 20;
+	-webkit-mask-image: linear-gradient(to bottom, transparent 9px, #000 9px);
+	mask-image: linear-gradient(to bottom, transparent 9px, #000 9px);
+}

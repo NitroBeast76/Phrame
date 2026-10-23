@@ -1,0 +1,1 @@
+@property --bloom-bg-expanded{syntax: "<color>"; inherits: true; initial-value: rgba(0,0,0,.92);}@property --bloom-text{syntax: "<color>"; inherits: true; initial-value: #ffffff;}@property --bloom-outline{syntax: "<color>"; inherits: true; initial-value: transparent;}:root{transition:--bloom-bg-expanded .3s ease,--bloom-text .3s ease,--bloom-outline .3s ease}

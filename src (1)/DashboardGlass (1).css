@@ -1,0 +1,262 @@
+/* The Dashboard tab as frosted glass, like the profile, windows and performance tabs: every card is a
+   pale translucent panel with a thin edge and cut corners, on a faint graph-paper backdrop, and the
+   small parts inside (tags, tiles, buttons) have square edges to match.
+   Only the adaptive (non-retro) look changes; the retro look is not touched. The weather icon
+   switches it off and on (glassMode.ts puts .dash-classic on <html> for the classic look).
+   Loaded after the other dashboard stylesheets. Flat on purpose: no blur, no looping animation. */
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) {
+	--dg-edge: color-mix(in srgb, var(--bloom-text, white) 20%, transparent);
+	--dg-line: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 65%, transparent);
+	--dg-grid: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 13%, transparent);
+	--dg-glass: color-mix(in srgb, var(--bloom-bg-expanded, #1b1b1b) 68%, transparent);
+	--dg-tint-hi: color-mix(in srgb, var(--bloom-text, white) 10%, transparent);
+	--dg-tint-lo: color-mix(in srgb, var(--bloom-text, white) 3%, transparent);
+	--dg-cut: 10px;
+	/* The edge along a cut corner: one line for each diagonal. */
+	--dg-diag-up: linear-gradient(
+		to top right,
+		transparent calc(50% - 1px),
+		var(--dg-edge) calc(50% - 1px) calc(50% + 0.5px),
+		transparent calc(50% + 0.5px)
+	);
+	--dg-diag-down: linear-gradient(
+		to bottom right,
+		transparent calc(50% - 1px),
+		var(--dg-edge) calc(50% - 1px) calc(50% + 0.5px),
+		transparent calc(50% + 0.5px)
+	);
+}
+
+/* The GIF card's picture sits at z-index -1. Without its own stacking context it fell behind the
+   card's background, which is opaque in retro, so the picture was hidden there. All themes. */
+.dash-gif {
+	isolation: isolate;
+}
+
+/* The weather icon is the switch between this look and the classic one: it works in every theme. */
+.dash-weather-badge {
+	cursor: pointer;
+	transition: transform 0.15s ease;
+}
+
+.dash-weather-badge:hover,
+.dash-weather-badge:focus-visible {
+	transform: scale(1.07);
+}
+
+.dash-weather-badge:focus-visible {
+	outline: 1.5px solid var(--bloom-accent, #ff9f0a);
+	outline-offset: 2px;
+}
+
+/* ---- Backdrop: graph paper that fades toward the edges, behind the cards ---- */
+.dash-grid:not(:where(.theme-retro *, .dash-classic *))::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	background-image:
+		linear-gradient(var(--dg-grid) 1px, transparent 1px),
+		linear-gradient(90deg, var(--dg-grid) 1px, transparent 1px);
+	background-size: 28px 28px;
+	background-position: center;
+	-webkit-mask-image: radial-gradient(ellipse 90% 100% at 50% 50%, #000 45%, rgba(0, 0, 0, 0.2) 100%);
+	mask-image: radial-gradient(ellipse 90% 100% at 50% 50%, #000 45%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+/* ---- The glass ---- */
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-card {
+	position: relative;
+	z-index: 1;
+	border-radius: 0;
+	border: 1px solid var(--dg-edge);
+	background:
+		linear-gradient(135deg, var(--dg-tint-hi), var(--dg-tint-lo)),
+		var(--dg-glass);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-card::before,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-card::after {
+	content: "";
+	position: absolute;
+	width: var(--dg-cut);
+	height: var(--dg-cut);
+	pointer-events: none;
+}
+
+/* ---- The shapes: one cut corner on most cards, two on a diagonal for the two big ones ---- */
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-weather {
+	clip-path: polygon(var(--dg-cut) 0, 100% 0, 100% 100%, 0 100%, 0 var(--dg-cut));
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-weather::after {
+	top: 0;
+	left: 0;
+	background: var(--dg-diag-down);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-profile {
+	clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--dg-cut)), calc(100% - var(--dg-cut)) 100%, 0 100%);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-profile::after {
+	bottom: 0;
+	right: 0;
+	background: var(--dg-diag-down);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-clock {
+	clip-path: polygon(0 0, 100% 0, 100% 100%, var(--dg-cut) 100%, 0 calc(100% - var(--dg-cut)));
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-clock::after {
+	bottom: 0;
+	left: 0;
+	background: var(--dg-diag-up);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-calendar {
+	clip-path: polygon(
+		var(--dg-cut) 0,
+		100% 0,
+		100% calc(100% - var(--dg-cut)),
+		calc(100% - var(--dg-cut)) 100%,
+		0 100%,
+		0 var(--dg-cut)
+	);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-calendar::before {
+	top: 0;
+	left: 0;
+	background: var(--dg-diag-down);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-calendar::after {
+	bottom: 0;
+	right: 0;
+	background: var(--dg-diag-down);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-gif {
+	clip-path: polygon(0 0, calc(100% - var(--dg-cut)) 0, 100% var(--dg-cut), 100% 100%, 0 100%);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-gif::after {
+	top: 0;
+	right: 0;
+	background: var(--dg-diag-up);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-media {
+	clip-path: polygon(
+		0 0,
+		calc(100% - var(--dg-cut)) 0,
+		100% var(--dg-cut),
+		100% 100%,
+		var(--dg-cut) 100%,
+		0 calc(100% - var(--dg-cut))
+	);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-media::before {
+	top: 0;
+	right: 0;
+	background: var(--dg-diag-up);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-media::after {
+	bottom: 0;
+	left: 0;
+	background: var(--dg-diag-up);
+}
+
+/* ---- Small parts: square-edged, with a hairline, to go with the cut corners. They keep the tan
+   fill (--bloom-border) from the skin, as in the classic look. ---- */
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-weather-place,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-id-tile,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-clk-tile {
+	border: 1px solid var(--dg-edge);
+	border-radius: 2px;
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-id-greet,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-clk-ampm,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-np-tag {
+	border-width: 1px;
+	border-radius: 2px;
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-weather-badge {
+	border-width: 1px;
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-weather-unit {
+	border-width: 1px;
+}
+
+/* The day and the hours / minutes tiles of the clock keep their seam; the cut-off corner of the
+   card is clear of them. */
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-clk-tile::after {
+	left: 3px;
+	right: 3px;
+}
+
+/* ---- Calendar ---- */
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-cal-tile {
+	border-radius: 2px;
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-cal-year,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-calendar .cal-band-names,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-calendar .day-name.now {
+	border-radius: 2px;
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-calendar .cal-band-we,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-calendar .cal-band-week,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-calendar .calendar-day {
+	border-radius: 2px;
+}
+
+/* The note editor covers the glass card, so it gets the same edge and no round corners. */
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-calendar .calendar-note-editor {
+	border-radius: 0;
+}
+
+/* ---- Now playing: square buttons, the record stays round ---- */
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-media .dash-media-controls button,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-media .dash-media-controls button.main {
+	border-radius: 2px;
+}
+
+/* ---- Power panel (opens from the avatar): glass over the whole grid ---- */
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-power-panel {
+	border: 1px solid var(--dg-edge);
+	border-radius: 0;
+	background:
+		linear-gradient(135deg, var(--dg-tint-hi), var(--dg-tint-lo)),
+		color-mix(in srgb, var(--bloom-bg-expanded, #1b1b1b) 94%, transparent);
+	clip-path: polygon(
+		var(--dg-cut) 0,
+		100% 0,
+		100% calc(100% - var(--dg-cut)),
+		calc(100% - var(--dg-cut)) 100%,
+		0 100%,
+		0 var(--dg-cut)
+	);
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-power-back,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-power-tile {
+	border: 1px solid var(--dg-edge);
+	border-radius: 2px;
+}
+
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-power-tile:hover,
+.dash-grid:not(:where(.theme-retro *, .dash-classic *)) .dash-power-tile:focus-visible {
+	border-color: var(--dg-line);
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 16%, transparent);
+}

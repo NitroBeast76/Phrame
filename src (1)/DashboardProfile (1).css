@@ -1,0 +1,529 @@
+/* Profile tab as a lab readout: graph paper with a scope trace behind two frosted panels, thin
+   connector lines, and the uptime row picked out as a tinted rectangle. The colours come from the
+   theme accent (--bloom-accent, pywal); the retro theme turns it into ink on paper.
+   Loaded after Dashboard.css, so these win over the plain .dash-profile-* rules there.
+   Only transform and opacity are animated, so the tab stays cheap while it is open. */
+
+.dash-pf {
+	--pf-line: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 65%, transparent);
+	--pf-grid: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 15%, transparent);
+	--pf-edge: color-mix(in srgb, var(--bloom-text, white) 20%, transparent);
+	--pf-glass: color-mix(in srgb, var(--bloom-bg-expanded, #1b1b1b) 74%, transparent);
+	--pf-chamfer: 12px;
+	/* The scope trace: thin and quiet here, a little heavier in retro (see below). */
+	--pf-trace-w: 1px;
+	--pf-ghost-w: 0.75px;
+	--pf-ghost-o: 0.4;
+
+	position: relative;
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.dash-profile-tab.dash-pf,
+.dash-windows.dash-pf {
+	gap: 0;
+	padding: 14px 18px;
+}
+
+/* ---- Backdrop: graph paper, an axis with ticks, the trace and a slow scan line ---- */
+.dash-pf-bg {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	background-image:
+		linear-gradient(var(--pf-grid) 1px, transparent 1px),
+		linear-gradient(90deg, var(--pf-grid) 1px, transparent 1px);
+	background-size: 28px 28px;
+	background-position: center;
+	-webkit-mask-image: radial-gradient(ellipse 85% 95% at 50% 50%, #000 40%, rgba(0, 0, 0, 0.18) 100%);
+	mask-image: radial-gradient(ellipse 85% 95% at 50% 50%, #000 40%, rgba(0, 0, 0, 0.18) 100%);
+}
+
+/* The horizontal axis, with a tick every half square. */
+.dash-pf-axis {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 50%;
+	height: 9px;
+	margin-top: -4px;
+	background:
+		linear-gradient(var(--pf-line), var(--pf-line)) center / 100% 1px no-repeat,
+		repeating-linear-gradient(90deg, var(--pf-line) 0 1px, transparent 1px 14px);
+	opacity: 0.55;
+}
+
+.dash-pf-scope {
+	position: absolute;
+	left: 0;
+	top: 50%;
+	width: 100%;
+	height: 62%;
+	transform: translateY(-50%);
+	overflow: visible;
+}
+
+.dash-pf-scope polyline {
+	fill: none;
+	stroke-width: var(--pf-trace-w);
+	stroke-linejoin: round;
+	vector-effect: non-scaling-stroke;
+}
+
+.dash-pf-scope .main {
+	stroke: var(--bloom-accent, #ff9f0a);
+}
+
+/* The fringing around the line, cyan on one side and yellow on the other. */
+.dash-pf-scope .ghost-a,
+.dash-pf-scope .ghost-b {
+	stroke-width: var(--pf-ghost-w);
+	opacity: var(--pf-ghost-o);
+	mix-blend-mode: screen;
+}
+
+.dash-pf-scope .ghost-a {
+	stroke: #5ce1ff;
+	transform: translateX(-2px);
+}
+
+.dash-pf-scope .ghost-b {
+	stroke: #ffe566;
+	transform: translateX(2px);
+}
+
+/* A soft vertical band that crosses the card over and over, as on a scope. The element is as
+   wide as the card; the band sits in its middle, and the element slides from -60% to 60%. */
+.dash-pf-sweep {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		90deg,
+		transparent 42%,
+		color-mix(in srgb, var(--bloom-accent, #ff9f0a) 20%, transparent) 50%,
+		transparent 58%
+	);
+	transform: translateX(-60%);
+	animation: dash-pf-sweep 7s linear infinite;
+}
+
+@keyframes dash-pf-sweep {
+	to {
+		transform: translateX(60%);
+	}
+}
+
+/* ---- Layout: the id panel, a connector, the readout panel ---- */
+.dash-pf-main {
+	position: relative;
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: stretch;
+}
+
+/* Frosted glass: a pale tint over the paper, a thin edge, and a cut corner. */
+.dash-pf-panel {
+	position: relative;
+	box-sizing: border-box;
+	border: 1px solid var(--pf-edge);
+	background:
+		linear-gradient(
+			135deg,
+			color-mix(in srgb, var(--bloom-text, white) 10%, transparent),
+			color-mix(in srgb, var(--bloom-text, white) 3%, transparent)
+		),
+		var(--pf-glass);
+}
+
+/* The edge along the cut corner, which the clip would otherwise take away. */
+.dash-pf-panel::after {
+	content: "";
+	position: absolute;
+	width: var(--pf-chamfer);
+	height: var(--pf-chamfer);
+}
+
+.dash-pf-id {
+	flex: 0 0 156px;
+	margin-right: 26px; /* room for the connector */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	padding: 10px 8px;
+	clip-path: polygon(0 0, calc(100% - var(--pf-chamfer)) 0, 100% var(--pf-chamfer), 100% 100%, 0 100%);
+}
+
+.dash-pf-id::after {
+	top: 0;
+	right: 0;
+	background: linear-gradient(
+		to top right,
+		transparent calc(50% - 1px),
+		var(--pf-edge) calc(50% - 1px) calc(50% + 0.5px),
+		transparent calc(50% + 0.5px)
+	);
+}
+
+.dash-pf-info {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 3px;
+	padding: 8px 12px 10px;
+	clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--pf-chamfer)), calc(100% - var(--pf-chamfer)) 100%, 0 100%);
+}
+
+.dash-pf-info::after {
+	bottom: 0;
+	right: 0;
+	background: linear-gradient(
+		to bottom right,
+		transparent calc(50% - 1px),
+		var(--pf-edge) calc(50% - 1px) calc(50% + 0.5px),
+		transparent calc(50% + 0.5px)
+	);
+}
+
+/* A hairline between the panels that ends in a small ring, like the connectors on the reference. */
+.dash-pf-link {
+	position: absolute;
+	left: 156px;
+	top: 34.5%; /* the height of the avatar's centre */
+	width: 26px;
+	height: 1px;
+	background: var(--pf-line);
+}
+
+.dash-pf-link::before,
+.dash-pf-link::after {
+	content: "";
+	position: absolute;
+	top: -3px;
+	width: 5px;
+	height: 5px;
+	box-sizing: border-box;
+	border: 1px solid var(--pf-line);
+	border-radius: 50%;
+}
+
+.dash-pf-link::before {
+	left: -3px;
+	background: var(--pf-line);
+}
+
+.dash-pf-link::after {
+	right: -3px;
+}
+
+/* ---- Id panel: the avatar on crosshair axes, then name, greeting and handle ---- */
+.dash-pf-axes {
+	position: relative;
+	isolation: isolate;
+	padding: 15px;
+}
+
+/* The two axes run through the picture and show only outside it, with a tick every 9px. */
+.dash-pf-axes::before,
+.dash-pf-axes::after {
+	content: "";
+	position: absolute;
+	z-index: -1;
+	opacity: 0.8;
+}
+
+.dash-pf-axes::before {
+	left: 50%;
+	top: 0;
+	bottom: 0;
+	width: 9px;
+	margin-left: -4px;
+	background:
+		linear-gradient(var(--pf-line), var(--pf-line)) center / 1px 100% no-repeat,
+		repeating-linear-gradient(180deg, var(--pf-line) 0 1px, transparent 1px 9px);
+}
+
+.dash-pf-axes::after {
+	top: 50%;
+	left: 0;
+	right: 0;
+	height: 9px;
+	margin-top: -4px;
+	background:
+		linear-gradient(var(--pf-line), var(--pf-line)) center / 100% 1px no-repeat,
+		repeating-linear-gradient(90deg, var(--pf-line) 0 1px, transparent 1px 9px);
+}
+
+.dash-pf-axes .dash-avatar {
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--bloom-accent, #ff9f0a) 70%, transparent);
+}
+
+.dash-pf-id .dash-id-name {
+	max-width: 100%;
+	font-size: 16px;
+	text-align: center;
+}
+
+.dash-pf-id .dash-id-greet {
+	padding: 3px 8px 2px;
+	font-size: 7px;
+}
+
+.dash-pf-id .dash-id-handle {
+	max-width: 100%;
+	font-size: 10px;
+}
+
+/* ---- Readout panel: a header, then one line per detail ---- */
+/* (the windows tab uses the same panel, header and lines) */
+.dash-pf-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 3px;
+	padding-bottom: 4px;
+	font-size: 7px;
+	font-weight: 700;
+	letter-spacing: 0.2em;
+	line-height: 1;
+	text-transform: uppercase;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+	border-bottom: 1px solid var(--pf-edge);
+}
+
+.dash-pf-pulse {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: var(--bloom-accent, #ff9f0a);
+	animation: dash-pf-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes dash-pf-pulse {
+	50% {
+		opacity: 0.25;
+	}
+}
+
+.dash-pf-row {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	min-width: 0;
+	padding: 4px 6px;
+	line-height: 1.1;
+}
+
+.dash-pf-k {
+	flex-shrink: 0;
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	font-size: 7.5px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.dash-pf-k em {
+	font-style: normal;
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+/* The dotted leader between the label and the value. */
+.dash-pf-dots {
+	flex: 1 1 10px;
+	min-width: 8px;
+	align-self: center;
+	height: 0;
+	border-top: 1px dotted var(--pf-edge);
+}
+
+.dash-pf-v {
+	min-width: 0;
+	font-size: 11px;
+	font-weight: 700;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Uptime: a flat tinted rectangle, like the highlighted one on the reference. */
+.dash-pf-row.hot {
+	margin-top: 2px;
+	border: 1px solid var(--pf-line);
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 20%, transparent);
+}
+
+.dash-pf-row.hot .dash-pf-v {
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+/* ---- Windows tab: the open windows as numbered readout lines ---- */
+.dash-windows.dash-pf {
+	flex-direction: column;
+}
+
+/* The one panel fills the card; the list scrolls inside it. */
+.dash-wn {
+	flex: 1;
+	min-height: 0;
+	justify-content: flex-start;
+	gap: 0;
+}
+
+.dash-wn-count {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.dash-wn-count b {
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+.dash-wn .dash-scroll {
+	gap: 1px;
+}
+
+.dash-wn .dash-win-row {
+	min-height: 25px;
+	gap: 8px;
+	padding: 0 6px;
+	border: 1px solid transparent;
+	border-radius: 0;
+}
+
+/* The hovered line becomes the tinted rectangle, like the uptime line on the profile tab. */
+.dash-wn .dash-win-row:hover,
+.dash-wn .dash-win-row:focus-visible {
+	outline: none;
+	border-color: var(--pf-line);
+	background: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 18%, transparent);
+}
+
+.dash-win-n {
+	flex-shrink: 0;
+	font-style: normal;
+	font-size: 7.5px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+.dash-wn .dash-win-title {
+	flex: 0 1 auto;
+	font-weight: 700;
+}
+
+.dash-wn .dash-win-app {
+	font-size: 7.5px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.dash-wn .dash-empty {
+	font-size: 10px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dash-pf-sweep,
+	.dash-pf-pulse {
+		animation: none;
+	}
+}
+
+/* ---- Retro: green-on-cream graph paper, as on the reference, in ink and the pywal accent ---- */
+.theme-retro .dash-pf {
+	--pf-line: var(--retro-accent-deep, #5b7a2a);
+	--pf-grid: color-mix(in srgb, var(--retro-accent-deep, #5b7a2a) 32%, transparent);
+	--pf-edge: var(--retro-ink, #2b2b2b);
+	--pf-glass: color-mix(in srgb, var(--retro-paper, #f0e8d8) 82%, transparent);
+	--pf-trace-w: 1.3px;
+	--pf-ghost-w: 1.3px;
+	--pf-ghost-o: 0.55;
+}
+
+.theme-retro .dash-pf-scope .main {
+	stroke: var(--retro-accent-deep, #5b7a2a);
+}
+
+/* Cyan and yellow fringing on cream paper, printed over the green. */
+.theme-retro .dash-pf-scope .ghost-a,
+.theme-retro .dash-pf-scope .ghost-b {
+	mix-blend-mode: multiply;
+}
+
+.theme-retro .dash-pf-sweep {
+	background: linear-gradient(
+		90deg,
+		transparent 42%,
+		color-mix(in srgb, var(--retro-accent, #cbb752) 45%, transparent) 50%,
+		transparent 58%
+	);
+}
+
+/* Square panels with the shared hard shadow, like the other retro cards. */
+.theme-retro .dash-pf-panel {
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	background: var(--pf-glass);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+	clip-path: none;
+}
+
+.theme-retro .dash-pf-panel::after {
+	display: none;
+}
+
+.theme-retro .dash-pf-axes .dash-avatar {
+	border-radius: 18px;
+	border: var(--retro-line, 2px) solid var(--retro-ink, #2b2b2b);
+	box-shadow: 2px 2px 0 var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-pf-head,
+.theme-retro .dash-pf-k {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .dash-pf-k em,
+.theme-retro .dash-pf-row.hot .dash-pf-v {
+	color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-pf-pulse {
+	background: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-wn-count b,
+.theme-retro .dash-win-n,
+.theme-retro .dash-wn .dash-win-fallback {
+	color: var(--retro-ink, #2b2b2b);
+}
+
+.theme-retro .dash-wn .dash-win-app {
+	color: var(--retro-ink-muted, #6b5a4b);
+}
+
+.theme-retro .dash-wn .dash-win-row:hover,
+.theme-retro .dash-wn .dash-win-row:focus-visible {
+	border-color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+}
+
+.theme-retro .dash-pf-row.hot {
+	border-color: var(--retro-ink, #2b2b2b);
+	background: var(--retro-accent, #cbb752);
+}

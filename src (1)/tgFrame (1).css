@@ -1,0 +1,25 @@
+/* The gun area is dark (the vignette), but the notch has its own lighter frame round the panel, a few pixels wide on the
+   left, right and bottom, so that frame showed as a pale edge. This paints the same darkness over that frame, outside the
+   gun area, as a border on a see-through box that sticks out past the panel (there is no top one: the tab bar is there).
+   The widths were measured from a screenshot. If a pale edge still shows, make the matching number bigger; if a dark
+   band shows outside the notch, make it smaller.
+   --tg-frame-dark   how dark (0 to 1; keep it equal to VEIL.dark in TimeGun.tsx so it matches the gun area) */
+.tg-root {
+	--tg-frame-dark: 0.78;
+	--tg-frame-left: 12px;
+	--tg-frame-right: 11px;
+	--tg-frame-bottom: 7px;
+}
+
+.tg-root::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: calc(-1 * var(--tg-frame-left));
+	right: calc(-1 * var(--tg-frame-right));
+	bottom: calc(-1 * var(--tg-frame-bottom));
+	border: solid rgba(0, 0, 0, var(--tg-frame-dark));
+	border-width: 0 var(--tg-frame-right) var(--tg-frame-bottom) var(--tg-frame-left);
+	border-radius: 0 0 40px 40px;
+	pointer-events: none;
+}

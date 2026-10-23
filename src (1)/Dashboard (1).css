@@ -1,0 +1,672 @@
+/* Tabbed dashboard panel, shown under the status bar while it is hovered. */
+.dash-panel {
+	position: absolute;
+	top: 36px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 36px);
+	box-sizing: border-box;
+	z-index: 2;
+	/* Clip to the panel, so big decorations (like the media tab rings) never spill outside it. */
+	overflow: hidden;
+	border-radius: 0 0 18px 18px;
+	padding: 2px 12px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	color: var(--bloom-text, white);
+}
+
+.dash-tabs {
+	display: flex;
+	justify-content: center;
+	gap: 24px;
+	height: 26px;
+	flex-shrink: 0;
+	overscroll-behavior: contain;
+}
+
+.dash-tab {
+	position: relative;
+	padding: 0 4px;
+	font: inherit;
+	font-size: 11px;
+	cursor: pointer;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+	background: transparent;
+	border: none;
+	transition: color 0.15s ease;
+}
+
+.dash-tab:hover,
+.dash-tab.active {
+	color: var(--bloom-text, white);
+}
+
+/* The sliding underline under the active tab (animated with a shared layoutId). */
+.dash-tab-marker {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -1px;
+	height: 2px;
+	border-radius: 2px;
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+.dash-body {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+}
+
+/* Each tab sits on its own layer so the old and new one can overlap while sliding. */
+.dash-slide {
+	position: absolute;
+	inset: 0;
+}
+
+/* ---- Cards ---- */
+.dash-card {
+	box-sizing: border-box;
+	min-width: 0;
+	min-height: 0;
+	border-radius: 16px;
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.05));
+}
+
+.dash-grid {
+	display: grid;
+	height: 100%;
+	gap: 8px;
+	grid-template-columns: 76px 1fr 1fr 76px 168px;
+	grid-template-rows: 84px 1fr;
+	/* How far the calendar card gives up its right side to the usage bars card. */
+	--cal-bars-shift: 5px;
+}
+
+.dash-weather {
+	grid-area: weather;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	padding: 8px;
+}
+
+.dash-weather-text {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+}
+
+.dash-weather-temp {
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.dash-weather-cond {
+	font-size: 10px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+/* ---- Profile (compact) ---- */
+.dash-profile {
+	grid-area: profile;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 12px;
+}
+
+.dash-avatar {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-radius: 50%;
+	cursor: pointer;
+	font-weight: 600;
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+.dash-profile-avatar-wrap {
+	position: relative;
+	flex-shrink: 0;
+}
+
+.dash-avatar img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.dash-profile-lines {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	font-size: 10.5px;
+	font-weight: 700;
+}
+
+.dash-profile-lines div {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	min-width: 0;
+}
+
+.dash-profile-lines svg {
+	flex-shrink: 0;
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+.dash-profile-lines span {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 1.5;
+}
+
+/* ---- Clock ---- */
+.dash-clock {
+	grid-area: clock;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+}
+
+.dash-ampm {
+	margin-top: 4px;
+	font-size: 9px;
+	font-weight: 700;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.dash-clock-num {
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.dash-clock-dots {
+	display: flex;
+	gap: 3px;
+	margin: 3px 0;
+}
+
+.dash-clock-dots i {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: var(--bloom-accent, #ff9f0a);
+}
+
+.dash-clock-day {
+	margin-bottom: 4px;
+	font-size: 10px;
+	font-weight: 700;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+}
+
+/* ---- Calendar ---- */
+/* The shared Calendar component, squeezed to fit the card. These rules only match
+   inside .dash-calendar, so the full-size calendar keeps its own sizing from App.css. */
+.dash-calendar {
+	grid-area: calendar;
+	position: relative;
+	padding: 8px 10px;
+	margin-right: var(--cal-bars-shift, 14px);
+}
+
+/* Static, so the note editor (absolute, inset 0) covers the whole card. */
+.dash-calendar .calendar-container {
+	position: static;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.dash-calendar .calendar-header {
+	margin-bottom: 2px;
+	text-align: center;
+}
+
+.dash-calendar .month-year {
+	font-size: 10.5px;
+}
+
+.dash-calendar .calendar-grid {
+	flex: 1;
+	min-height: 0;
+	gap: 0;
+	grid-auto-rows: 1fr;
+}
+
+.dash-calendar .day-name {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-bottom: 0;
+	font-size: 8.5px;
+}
+
+.dash-calendar .calendar-day {
+	aspect-ratio: auto;
+	justify-self: center;
+	align-self: center;
+	width: 22px;
+	max-width: 100%;
+	height: 100%;
+	max-height: 17px;
+	font-size: 9.5px;
+	border-radius: 5px;
+}
+
+/* No note dot in the compact card; the tinted background already marks days with notes. */
+.dash-calendar .calendar-day.has-note::after {
+	display: none;
+}
+
+.dash-calendar .calendar-note-editor {
+	border-radius: 16px;
+}
+
+/* ---- Resource bars ---- */
+.dash-bars {
+	grid-area: bars;
+	display: flex;
+	justify-content: space-around;
+	gap: 4px;
+	padding: 10px 6px 8px;
+	/* Grows leftwards into the space the calendar card gave up. */
+	margin-left: calc(var(--cal-bars-shift, 14px) * -1);
+}
+
+.dash-bar-col {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+}
+
+.dash-bar {
+	flex: 1;
+	width: 9px;
+	display: flex;
+	align-items: flex-end;
+	overflow: hidden;
+	border-radius: 5px;
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.dash-bar-fill {
+	width: 100%;
+	border-radius: 5px;
+	background: var(--bloom-accent, #ff9f0a);
+	transition: height 0.6s ease;
+}
+
+/* ---- Media ---- */
+.dash-media {
+	grid-area: media;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	padding: 10px 8px;
+}
+
+.dash-media.empty {
+	gap: 8px;
+	font-size: 10px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.dash-art {
+	width: 96px;
+	height: 96px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-radius: 50%;
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dash-art img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.dash-media-title,
+.dash-media-artist {
+	max-width: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: center;
+}
+
+.dash-media-title {
+	margin-top: 4px;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.dash-media-artist {
+	font-size: 10px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.dash-media-controls {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 4px;
+}
+
+.dash-media-controls button {
+	width: 26px;
+	height: 26px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	border-radius: 50%;
+	color: var(--bloom-text, white);
+	background: transparent;
+	border: none;
+}
+
+.dash-media-controls button:hover {
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.dash-media-controls button.main {
+	width: 30px;
+	height: 30px;
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-text, white);
+}
+
+/* ---- Profile tab ---- */
+.dash-profile-tab {
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 40px;
+	padding: 12px 24px;
+}
+
+.dash-profile-hero {
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+}
+
+.dash-profile-name {
+	font-size: 15px;
+	font-weight: 700;
+}
+
+.dash-profile-rows {
+	flex: 0 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 11px;
+}
+
+.dash-profile-row {
+	display: flex;
+	align-items: baseline;
+	gap: 14px;
+	font-size: 12px;
+	font-weight: 400;
+}
+
+.dash-profile-label {
+	width: 72px;
+	flex-shrink: 0;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.dash-profile-value {
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* ---- Windows tab ---- */
+.dash-windows {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 8px 8px 8px 12px;
+}
+
+.dash-windows-count {
+	font-size: 10px;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.dash-scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	scrollbar-width: none;
+}
+
+.dash-scroll::-webkit-scrollbar {
+	display: none;
+}
+
+.dash-empty {
+	margin: auto;
+	font-size: 11px;
+	opacity: 0.45;
+}
+
+.dash-win-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 28px;
+	padding: 0 8px;
+	cursor: pointer;
+	text-align: left;
+	font: inherit;
+	font-size: 11px;
+	color: var(--bloom-text, white);
+	background: transparent;
+	border: none;
+	border-radius: 9px;
+}
+
+.dash-win-row:hover {
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.1));
+}
+
+.dash-win-row img,
+.dash-win-fallback {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+	object-fit: contain;
+}
+
+/* No app icon: show an icon for the kind of window instead (browser, terminal, chat...). */
+.dash-win-fallback {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--bloom-accent, #ff9f0a);
+}
+
+.dash-win-title {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Close button: always takes its space so rows don't shift, but only shows on hover. */
+.dash-win-close {
+	width: 22px;
+	height: 22px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	opacity: 0;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.7));
+	background: transparent;
+	border: none;
+	border-radius: 7px;
+	transition:
+		opacity 0.12s ease,
+		background 0.12s ease,
+		color 0.12s ease;
+}
+
+.dash-win-row:hover .dash-win-close,
+.dash-win-row:focus-visible .dash-win-close,
+.dash-win-close:focus-visible {
+	opacity: 1;
+}
+
+.dash-win-close:hover {
+	color: white;
+	background: #ff453a;
+}
+
+.dash-win-app {
+	max-width: 110px;
+	flex-shrink: 0;
+	font-size: 9.5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.55));
+}
+
+/* Power panel: covers the dashboard grid with large Windows power buttons */
+.dash-grid {
+	position: relative;
+}
+
+.dash-power-panel {
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	box-sizing: border-box;
+	padding: 10px 12px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	border-radius: 16px;
+	color: var(--bloom-text, white);
+	background: var(--bloom-bg-expanded, #202020);
+	border: 1px solid var(--bloom-border, rgba(255, 255, 255, 0.1));
+}
+
+.dash-power-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 26px;
+}
+
+.dash-power-back {
+	width: 26px;
+	height: 26px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	cursor: pointer;
+	color: var(--bloom-text, white);
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	border: 1px solid var(--bloom-border, rgba(255, 255, 255, 0.1));
+	border-radius: 50%;
+}
+
+.dash-power-back:hover {
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+}
+
+.dash-power-title {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.dash-power-hint {
+	margin-left: auto;
+	font-size: 10px;
+	opacity: 0.6;
+}
+
+.dash-power-grid {
+	flex: 1;
+	min-height: 0;
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 8px;
+}
+
+.dash-power-tile {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	font: inherit;
+	font-size: 11px;
+	cursor: pointer;
+	color: var(--bloom-text, white);
+	background: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	border: 1px solid var(--bloom-border, rgba(255, 255, 255, 0.06));
+	border-radius: 14px;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease;
+}
+
+.dash-power-tile:hover,
+.dash-power-tile:focus-visible {
+	background: var(--bloom-hover, rgba(255, 255, 255, 0.12));
+	outline: none;
+}
+
+.dash-power-tile.armed {
+	color: var(--bloom-bg-expanded, black);
+	background: var(--bloom-text, white);
+}

@@ -1,0 +1,1005 @@
+/* The retro media tab: a bench oscilloscope in the paper-and-ink skin.
+
+   The faceplate is a flat card like the dashboard and performance cards (2px
+   ink outline, hard offset shadow, the shared 16/9/5px radii), so the tab sits
+   with its neighbours. What makes it a scope is the thick pale bezel around a
+   phosphor screen and the skirted knobs with their printed scales.
+
+   Colours: --retro-* (paper, ink, accent -- pywal, via theme.ts) carry the
+   faceplate, the bezel tint, the knob caps and the fader; --scope-* carry the
+   screen well, the phosphor and the lamp. Every variable has a fallback, so
+   the tab still draws before theme.ts has run or under another theme. */
+
+.ms-root {
+	--ms-paper: var(--retro-paper, #f0e8d8);
+	--ms-deep: var(--retro-paper-deep, #d9cbb4);
+	--ms-ink: var(--retro-ink, #2b2b2b);
+	--ms-soft: var(--retro-ink-muted, #6b5a4b);
+	--ms-accent: var(--retro-accent, #7fcdd6);
+	--ms-accent-deep: var(--retro-accent-deep, #4f9aa6);
+	--ms-screen: var(--scope-screen, #0d1f1a);
+	--ms-phos: var(--scope-phos, #7ed6b4);
+	--ms-lamp: var(--scope-lamp, #c0392b);
+	--ms-line: var(--retro-line, 2px);
+	--ms-r-lg: var(--retro-r-lg, 16px);
+	--ms-r-md: var(--retro-r-md, 9px);
+	/* The bezel is the accent, washed out into the paper: pale, like the plastic
+	   surround of the reference, and it follows the wallpaper. */
+	--ms-bezel: color-mix(in srgb, var(--ms-accent) 34%, var(--ms-paper));
+
+	box-sizing: border-box;
+	height: 100%;
+	/* Room on the right and bottom for the card's hard shadow. */
+	padding: 0 4px 4px 1px;
+	position: relative;
+	color: var(--ms-ink);
+}
+
+/* ---- Faceplate ---- */
+
+.ms-face {
+	box-sizing: border-box;
+	height: 100%;
+	display: grid;
+	grid-template-columns: minmax(0, 0.86fr) minmax(0, 1fr);
+	gap: 8px;
+	padding: 8px;
+	border: var(--ms-line) solid var(--ms-ink);
+	border-radius: var(--ms-r-lg);
+	background: var(--ms-deep);
+	box-shadow: var(--retro-shadow-sm, 3px 3px 0 var(--ms-ink));
+}
+
+/* ---- The scope ---- */
+
+.ms-scope {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+	min-height: 0;
+}
+
+/* The bezel: a thick pale surround with a lit top-left edge and a shaded
+   bottom-right one, the way the moulded frame in the reference catches light. */
+.ms-bezel {
+	flex: 1;
+	min-height: 0;
+	padding: 7px;
+	border: var(--ms-line) solid var(--ms-ink);
+	border-radius: 14px;
+	background: var(--ms-bezel);
+	box-shadow:
+		inset 2px 2px 0 color-mix(in srgb, #fff 60%, transparent),
+		inset -2px -2px 0 color-mix(in srgb, var(--ms-ink) 20%, transparent);
+}
+
+/* The glass: sunk into the bezel. */
+.ms-screen {
+	position: relative;
+	/* The border is inside the 100%, so the glass sits centred in the bezel (without this
+	   it was 4px too wide and too tall, and the bezel looked thinner on the right and
+	   bottom). */
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	cursor: pointer;
+	border: var(--ms-line) solid var(--ms-ink);
+	border-radius: 7px;
+	background: var(--ms-screen);
+	box-shadow: inset 0 0 18px 4px rgba(0, 0, 0, 0.62);
+}
+
+.ms-screen:focus-visible {
+	outline: 2px solid var(--ms-accent-deep);
+	outline-offset: 2px;
+}
+
+/* Raster lines and a soft glare, so the glass does not read as a flat panel. */
+.ms-screen::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	pointer-events: none;
+	background: repeating-linear-gradient(
+		0deg,
+		rgba(0, 0, 0, 0.16) 0 1px,
+		transparent 1px 3px
+	);
+}
+
+.ms-screen::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	pointer-events: none;
+	background: linear-gradient(150deg, rgba(255, 255, 255, 0.1), transparent 40%);
+}
+
+.ms-screen-canvas {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+/* Volume readout, drawn on the glass while the level changes. */
+.ms-screen-vol {
+	position: absolute;
+	left: 8px;
+	bottom: 7px;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 7px;
+	border-radius: 3px;
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-phos);
+	background: rgba(0, 0, 0, 0.5);
+	opacity: 0;
+	transition: opacity 0.2s ease;
+	pointer-events: none;
+}
+
+.ms-screen-vol.show {
+	opacity: 1;
+}
+
+/* The cover as a small phosphor print: the picture is turned to greyscale and multiplied
+   with the phosphor colour, so it looks like part of the display instead of a photo laid
+   over it. Four small corner marks frame it. */
+.ms-thumb {
+	position: absolute;
+	right: 14px;
+	top: 26px;
+	z-index: 2;
+	width: 38px;
+	height: 38px;
+	padding: 2px;
+	box-sizing: border-box;
+	pointer-events: none;
+	background: var(--ms-phos);
+	border-radius: 2px;
+	opacity: 0.9;
+	box-shadow:
+		0 0 0 1px color-mix(in srgb, var(--ms-phos) 55%, transparent),
+		0 0 8px color-mix(in srgb, var(--ms-phos) 35%, transparent);
+}
+
+.ms-thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	filter: grayscale(1) contrast(1.25) brightness(1.05);
+	mix-blend-mode: multiply;
+}
+
+/* ---- Screws in the corners of the faceplate ---- */
+
+.ms-screw {
+	position: absolute;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--ms-ink) 14%, var(--ms-paper));
+	border: 1px solid color-mix(in srgb, var(--ms-ink) 70%, transparent);
+	pointer-events: none;
+}
+
+.ms-screw::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 4px;
+	height: 1px;
+	margin: -0.5px 0 0 -2px;
+	background: color-mix(in srgb, var(--ms-ink) 70%, transparent);
+	transform: rotate(var(--r, 35deg));
+}
+
+.ms-screw.tl {
+	left: 3px;
+	top: 3px;
+}
+
+.ms-screw.tr {
+	right: 3px;
+	top: 3px;
+	--r: -20deg;
+}
+
+.ms-screw.bl {
+	left: 3px;
+	bottom: 3px;
+	--r: 70deg;
+}
+
+.ms-screw.br {
+	right: 3px;
+	bottom: 3px;
+	--r: 10deg;
+}
+
+/* ---- A line of small print above the track bar ---- */
+
+.ms-strip {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 6.5px;
+	letter-spacing: 0.16em;
+	line-height: 1;
+	color: var(--ms-soft);
+	white-space: nowrap;
+}
+
+.ms-strip i {
+	flex: 1;
+	height: 0;
+	border-top: 1px dotted color-mix(in srgb, var(--ms-ink) 45%, transparent);
+}
+
+.ms-strip-ok {
+	display: inline-block;
+	width: 5px;
+	height: 5px;
+	margin: 0 1px 0 2px;
+	vertical-align: 0;
+	border-radius: 50%;
+	background: var(--ms-accent-deep);
+	border: 1px solid var(--ms-ink);
+}
+
+/* ---- The track plate ---- */
+
+.ms-label {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 9px;
+	border: var(--ms-line) solid var(--ms-ink);
+	border-radius: var(--ms-r-md);
+	background: var(--ms-paper);
+}
+
+.ms-label-text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.ms-label-title {
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.15;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.ms-label-sub {
+	font-size: 8.5px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ms-soft);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.ms-label-album {
+	opacity: 0.8;
+}
+
+/* Pilot lamp in a socket: dark until playing, then lit. */
+.ms-lamp {
+	flex-shrink: 0;
+	width: 13px;
+	height: 13px;
+	border: var(--ms-line) solid var(--ms-ink);
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--ms-lamp) 28%, var(--ms-ink));
+	transition:
+		background 0.25s ease,
+		box-shadow 0.25s ease;
+}
+
+.ms-lamp.on {
+	background: var(--ms-lamp);
+	box-shadow:
+		inset 1.5px 1.5px 0 color-mix(in srgb, #fff 55%, transparent),
+		0 0 7px 1px color-mix(in srgb, var(--ms-lamp) 65%, transparent);
+}
+
+/* ---- The control panel ---- */
+
+.ms-controls {
+	/* The knobs size themselves from this column's width (cqw), so a narrower
+	   window shrinks them instead of clipping the volume knob. */
+	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 6px;
+	min-width: 0;
+	min-height: 0;
+	padding: 2px 4px 0 14px;
+	/* A thin panel line, as between the sections of the reference. */
+	border-left: 1.5px solid color-mix(in srgb, var(--ms-ink) 30%, transparent);
+}
+
+.ms-legend,
+.ms-knob-legend {
+	font-size: 8px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	line-height: 1;
+	color: var(--ms-soft);
+	white-space: nowrap;
+}
+
+/* ---- Knobs ---- */
+
+.ms-knobs {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	min-width: 0;
+}
+
+.ms-rule {
+	align-self: center;
+	width: 0;
+	height: 50px;
+	border-left: 1.5px solid color-mix(in srgb, var(--ms-ink) 30%, transparent);
+}
+
+.ms-knob {
+	--a: 0deg;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1px;
+	padding: 0;
+	font: inherit;
+	color: var(--ms-ink);
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+.ms-knob:focus-visible,
+.ms-vol:focus-visible {
+	outline: 2px solid var(--ms-accent-deep);
+	outline-offset: 1px;
+	border-radius: 12px;
+}
+
+.ms-knob-face {
+	position: relative;
+	display: block;
+	width: clamp(42px, 19cqw, 54px);
+	aspect-ratio: 1;
+}
+
+.ms-knob.play .ms-knob-face {
+	width: clamp(58px, 26cqw, 76px);
+}
+
+.ms-knob.vol-wrap .ms-knob-face {
+	width: clamp(50px, 22cqw, 64px);
+}
+
+.ms-knob-art {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+/* The printed scale on the faceplate. */
+.ms-knob-scale line {
+	stroke: var(--ms-soft);
+	stroke-width: 1.3;
+	stroke-linecap: round;
+}
+
+.ms-knob-shadow {
+	fill: var(--ms-ink);
+}
+
+/* The skirt turns; the cap and its glyph do not. */
+.ms-skirt {
+	transform: rotate(var(--a));
+	transform-box: fill-box;
+	transform-origin: center;
+	transition: transform 0.36s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ms-skirt-body {
+	fill: var(--ms-paper);
+	stroke: var(--ms-ink);
+	stroke-width: 2px;
+	vector-effect: non-scaling-stroke;
+}
+
+/* Flutes cut into the rim: 36 of them, so the dash pattern closes the circle. */
+.ms-skirt-flutes {
+	fill: none;
+	stroke: var(--ms-ink);
+	stroke-width: 3.4;
+	stroke-dasharray: 1.2 2.186;
+	opacity: 0.4;
+}
+
+.ms-skirt-pointer {
+	fill: none;
+	stroke: var(--ms-ink);
+	stroke-width: 3.4;
+	stroke-linecap: round;
+}
+
+/* The pale pointer on the dark volume cap, like the white lines on the
+   reference's black knobs. */
+.ms-cap-pointer {
+	fill: none;
+	stroke: var(--ms-paper);
+	stroke-width: 2.6;
+	stroke-linecap: round;
+}
+
+.ms-cap {
+	stroke: var(--ms-ink);
+	stroke-width: 2px;
+	vector-effect: non-scaling-stroke;
+}
+
+.ms-cap.ink {
+	fill: var(--ms-ink);
+}
+
+.ms-cap.accent {
+	fill: var(--ms-accent);
+}
+
+.ms-cap.paper {
+	fill: var(--ms-paper);
+}
+
+.ms-cap-gloss {
+	fill: none;
+	stroke: #fff;
+	stroke-width: 1.5;
+	stroke-linecap: round;
+	opacity: 0.4;
+}
+
+.ms-knob-glyph {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	pointer-events: none;
+}
+
+.ms-knob.prev .ms-knob-glyph,
+.ms-knob.next .ms-knob-glyph {
+	color: var(--ms-paper);
+}
+
+.ms-knob.play .ms-knob-glyph {
+	color: var(--ms-ink);
+}
+
+/* Held down: the knob moves into its hard shadow, and the skirt turns a notch. */
+.ms-knob.prev:active {
+	--a: -70deg;
+}
+
+.ms-knob.next:active {
+	--a: 70deg;
+}
+
+.ms-knob.prev:active .ms-knob-top,
+.ms-knob.next:active .ms-knob-top,
+.ms-knob.play:active .ms-knob-top {
+	transform: translate(1.6px, 2px);
+}
+
+.ms-knob:hover .ms-skirt-body {
+	fill: color-mix(in srgb, var(--ms-accent) 22%, var(--ms-paper));
+}
+
+.ms-vol {
+	display: block;
+	cursor: ns-resize;
+	touch-action: none;
+	user-select: none;
+}
+
+.ms-vol.vol-wrap,
+.vol-wrap .ms-vol {
+	--a: 0deg;
+}
+
+/* ---- Fader ---- */
+
+.ms-fader {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+}
+
+.ms-fader-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.ms-fader-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* A small tag in the accent colour, like the one that names the mode in the reference. */
+.ms-state {
+	padding: 2px 5px 1px;
+	font-size: 7px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	line-height: 1;
+	color: var(--ms-soft);
+	border: 1px solid color-mix(in srgb, var(--ms-ink) 45%, transparent);
+	border-radius: 2px;
+}
+
+.ms-state.on {
+	color: var(--ms-ink);
+	background: var(--ms-accent);
+	border-color: var(--ms-ink);
+}
+
+.ms-fader-time {
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-soft);
+}
+
+.ms-fader-now {
+	color: var(--ms-ink);
+	font-weight: 700;
+}
+
+/* The range bar: a thin line (solid and red up to the cursor, dashed after it), a printed
+   scale under it, a diamond cursor on a stem and a flag above that says how far along it is. */
+.ms-seek {
+	--p: 0;
+	position: relative;
+	height: 34px;
+	margin: 0 2px;
+}
+
+.ms-seek-line {
+	position: absolute;
+	left: 6px;
+	right: 6px;
+	top: 20px;
+	height: 0;
+	/* The part still to play. */
+	border-top: 2px dashed color-mix(in srgb, var(--ms-ink) 55%, transparent);
+}
+
+.ms-seek-done {
+	position: absolute;
+	left: 0;
+	top: -2px;
+	width: calc(100% * var(--p));
+	height: 2px;
+	background: var(--ms-lamp);
+}
+
+/* Printed scale: a short tick every 2.5%, a longer one every quarter. */
+.ms-seek-ticks {
+	position: absolute;
+	left: 6px;
+	right: 6px;
+	top: 25px;
+	height: 8px;
+	background:
+		repeating-linear-gradient(90deg, var(--ms-ink) 0 1.5px, transparent 1.5px 25%) top / calc(100% + 1.5px) 8px no-repeat,
+		repeating-linear-gradient(90deg, var(--ms-soft) 0 1px, transparent 1px 2.5%) top / calc(100% + 1px) 4px no-repeat;
+}
+
+.ms-seek-head {
+	position: absolute;
+	left: calc(6px + (100% - 12px) * var(--p));
+	top: 0;
+	width: 0;
+	height: 34px;
+	pointer-events: none;
+}
+
+.ms-seek-flag {
+	position: absolute;
+	left: 0;
+	top: 0;
+	transform: translateX(-50%);
+	padding: 2px 4px 1px;
+	font-size: 7px;
+	font-weight: 700;
+	line-height: 1;
+	letter-spacing: 0.06em;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-paper);
+	background: var(--ms-lamp);
+	border: 1px solid var(--ms-ink);
+	border-radius: 2px;
+	white-space: nowrap;
+}
+
+.ms-seek-stem {
+	position: absolute;
+	left: -1px;
+	top: 11px;
+	width: 2px;
+	height: 9px;
+	background: var(--ms-lamp);
+}
+
+.ms-seek-diamond {
+	position: absolute;
+	left: -6px;
+	top: 15px;
+	width: 12px;
+	height: 12px;
+	box-sizing: border-box;
+	background: var(--ms-accent);
+	border: var(--ms-line) solid var(--ms-ink);
+	transform: rotate(45deg) scale(0.85);
+	box-shadow: 2px 2px 0 var(--ms-ink);
+}
+
+.ms-seek-input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	cursor: pointer;
+	opacity: 0;
+}
+
+/* The input is invisible, so a keyboard focus ring goes on the bar instead. */
+.ms-seek:has(.ms-seek-input:focus-visible) {
+	outline: 2px solid var(--ms-accent-deep);
+	outline-offset: 2px;
+}
+
+/* The five times printed under the scale. */
+.ms-seek-nums {
+	display: flex;
+	justify-content: space-between;
+	margin: 0 2px;
+	padding: 0 2px;
+	font-size: 6.5px;
+	letter-spacing: 0.04em;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-soft);
+}
+
+/* ---- Extras: copy, source tag, picture slot ---- */
+
+.ms-extras {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-width: 0;
+}
+
+.ms-push {
+	width: 34px;
+	height: 28px;
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	padding: 0;
+	cursor: pointer;
+	color: var(--ms-ink);
+	background: var(--ms-paper);
+	border: var(--ms-line) solid var(--ms-ink);
+	border-radius: var(--ms-r-md);
+	box-shadow: 2px 2px 0 var(--ms-ink);
+}
+
+.ms-push:hover {
+	background: var(--ms-accent);
+}
+
+.ms-push:active {
+	transform: translate(2px, 2px);
+	box-shadow: none;
+}
+
+.ms-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	max-width: 138px;
+	height: 28px;
+	padding: 0 10px;
+	box-sizing: border-box;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--ms-ink);
+	background: var(--ms-paper);
+	border: 1px solid var(--ms-ink);
+	border-radius: var(--ms-r-md);
+}
+
+.ms-tag-dot {
+	flex-shrink: 0;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--ms-lamp);
+}
+
+.ms-slot {
+	position: relative;
+	width: 34px;
+	height: 34px;
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	padding: 0;
+	cursor: pointer;
+	overflow: hidden;
+	color: var(--ms-soft);
+	background: var(--ms-paper);
+	border: var(--ms-line) solid var(--ms-ink);
+	border-radius: var(--ms-r-md);
+}
+
+/* With a picture there is no box at all: just the picture. (The empty slot keeps its
+   dashed outline, because that is the "add a picture" button.) */
+.ms-slot.has-image {
+	width: 38px;
+	height: 38px;
+	overflow: visible;
+	background: transparent;
+	border: none;
+	border-radius: 0;
+}
+
+.ms-slot.has-image img {
+	object-fit: contain;
+}
+
+.ms-slot.has-image .ms-slot-tools {
+	border-radius: 8px;
+}
+
+.ms-slot-empty {
+	border-style: dashed;
+	border-color: var(--ms-soft);
+	background: transparent;
+}
+
+.ms-slot-empty:hover {
+	color: var(--ms-ink);
+	border-color: var(--ms-ink);
+	background: color-mix(in srgb, var(--ms-accent) 35%, transparent);
+}
+
+.ms-slot img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.ms-slot-tools {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+	background: rgba(0, 0, 0, 0.5);
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.ms-slot.has-image:hover .ms-slot-tools,
+.ms-slot.has-image:focus-within .ms-slot-tools {
+	opacity: 1;
+}
+
+.ms-slot-btn {
+	width: 16px;
+	height: 16px;
+	display: grid;
+	place-items: center;
+	padding: 0;
+	cursor: pointer;
+	color: var(--ms-paper);
+	background: var(--ms-ink);
+	border: none;
+	border-radius: 4px;
+}
+
+.ms-slot-btn:last-child:hover {
+	background: var(--ms-lamp);
+}
+
+/* ---- Output picker, over the glass ---- */
+
+.ms-output {
+	position: absolute;
+	inset: 4px;
+	z-index: 3;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--ms-screen) 90%, black);
+	border: 1px solid color-mix(in srgb, var(--ms-phos) 45%, transparent);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.ms-output-head {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	padding: 4px 6px;
+	border-bottom: 1px solid color-mix(in srgb, var(--ms-phos) 24%, transparent);
+}
+
+.ms-output-back {
+	width: 18px;
+	height: 18px;
+	display: grid;
+	place-items: center;
+	padding: 0;
+	cursor: pointer;
+	color: var(--ms-phos);
+	background: transparent;
+	border: none;
+	border-radius: 2px;
+}
+
+.ms-output-back:hover {
+	background: color-mix(in srgb, var(--ms-phos) 18%, transparent);
+}
+
+.ms-output-title {
+	font-size: 8.5px;
+	font-weight: 700;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--ms-phos);
+}
+
+.ms-output-list {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 3px;
+	scrollbar-width: none;
+}
+
+.ms-output-list::-webkit-scrollbar {
+	display: none;
+}
+
+.ms-output-item {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 6px;
+	cursor: pointer;
+	font: inherit;
+	font-size: 10px;
+	text-align: left;
+	color: var(--ms-phos);
+	background: transparent;
+	border: none;
+	border-radius: 2px;
+}
+
+.ms-output-item:hover {
+	background: color-mix(in srgb, var(--ms-phos) 16%, transparent);
+}
+
+.ms-output-item.active {
+	background: color-mix(in srgb, var(--ms-phos) 26%, transparent);
+}
+
+.ms-output-name {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.ms-output-check {
+	flex-shrink: 0;
+	color: var(--ms-phos);
+}
+
+.ms-output-empty {
+	padding: 8px;
+	font-size: 10px;
+	text-align: center;
+	color: color-mix(in srgb, var(--ms-phos) 70%, transparent);
+}
+
+/* ---- Empty state ---- */
+
+.ms-root.ms-empty .ms-face {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ms-empty-unit {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 14px;
+}
+
+.ms-empty-screen {
+	width: 112px;
+	height: 64px;
+	display: grid;
+	place-items: center;
+	border: var(--ms-line) solid var(--ms-ink);
+	border-radius: 7px;
+	color: color-mix(in srgb, var(--ms-phos) 60%, transparent);
+	background: var(--ms-screen);
+	box-shadow:
+		inset 0 0 16px 3px rgba(0, 0, 0, 0.62),
+		0 0 0 6px var(--ms-bezel),
+		0 0 0 8px var(--ms-ink),
+		3px 3px 0 8px var(--ms-ink);
+}
+
+.ms-empty-text {
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: var(--ms-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ms-skirt,
+	.ms-lamp,
+	.ms-screen-vol {
+		transition: none;
+	}
+}

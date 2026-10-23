@@ -1,0 +1,1292 @@
+/* Wallpaper panel, "Memory Archive" edition: every wallpaper is a numbered memory disk (MEM-001 ...).
+   Sits under the notch's 36px bar, like the Time gun and the task board. Accent and text follow the
+   pywal palette through Bloom's variables; the disk plastic is tinted with the accent. */
+.wp-panel {
+	position: absolute;
+	top: 36px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 36px);
+	box-sizing: border-box;
+	z-index: 2;
+	color: var(--bloom-text, var(--text, white));
+	--wp-accent: var(--bloom-accent, var(--blue, #8ab4ff));
+	--wp-glass: var(--bloom-group-bg, rgba(255, 255, 255, 0.06));
+	--wp-line: rgba(255, 255, 255, 0.1);
+	--wp-grid: rgba(255, 255, 255, 0.035);
+	--wp-plastic: color-mix(in srgb, var(--wp-accent) 12%, #18181c);
+	--wp-disk: rgba(255, 255, 255, 0.045); /* the clear plastic shell: you see the notch through it */
+	--wp-disk-rim: color-mix(in srgb, var(--wp-accent) 14%, rgba(228, 218, 208, 0.7));
+	--wp-platter: color-mix(in srgb, var(--wp-accent) 8%, rgb(184, 170, 163));
+	--wp-disk-paper: #f1eeec;
+	--wp-disk-tan: #a39690;
+	--wp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+	/* The selected disk floating up out of the rack: a soft rise with a small overshoot (about 4%) that settles. The row
+	   itself slides with --wp-float-ease: no snap at the start, a long gentle landing. */
+	--wp-pop-ms: 0.55s;
+	--wp-pop-ease: cubic-bezier(0.34, 1.3, 0.5, 1);
+	--wp-float-ms: 0.6s;
+	--wp-float-ease: cubic-bezier(0.3, 0.9, 0.35, 1);
+}
+
+.wp-root {
+	position: relative;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 2px 16px 10px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	user-select: none;
+}
+
+/* Faint graph paper behind everything, fading out towards the edges (same grid as the dashboard). */
+.wp-root::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background-image: linear-gradient(var(--wp-grid) 1px, transparent 1px),
+		linear-gradient(90deg, var(--wp-grid) 1px, transparent 1px);
+	background-size: 18px 18px;
+	-webkit-mask-image: radial-gradient(ellipse at 50% 60%, #000 25%, transparent 85%);
+	mask-image: radial-gradient(ellipse at 50% 60%, #000 25%, transparent 85%);
+}
+
+.wp-root > * {
+	position: relative;
+}
+
+/* ---- Top row: search box, a drawer of option chips, and the drawer's toggle ---- */
+.wp-top {
+	display: flex;
+	align-items: center;
+	height: 28px;
+	flex-shrink: 0;
+}
+
+/* Hazard tape along the top and bottom edge of the panel, like the barrier arm in the crossing wallpaper.
+   Very faint, and fading out towards the sides. */
+.wp-root::after {
+	content: "";
+	position: absolute;
+	inset: 0 16px;
+	pointer-events: none;
+	opacity: 0.3;
+	--tape: repeating-linear-gradient(135deg, var(--wp-disk-paper) 0 4px, transparent 4px 8px);
+	background:
+		var(--tape) left 0 top 0 / 100% 2px no-repeat,
+		var(--tape) left 0 bottom 4px / 100% 2px no-repeat;
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+	mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+}
+
+/* The search box is a drive bay for a floppy: a "head" block with a status LED on the left, a paper
+   label to type on, and the folder position on a paper-white shutter plate on the right. The top-right
+   corner is cut like a 3.5" disk. */
+.wp-search {
+	--cut: 10px;
+	display: flex;
+	align-items: stretch;
+	flex: 1;
+	min-width: 0;
+	height: 28px;
+	box-sizing: border-box;
+	padding: 0;
+	border-radius: 0;
+	background:
+		repeating-linear-gradient(0deg, transparent 0 6px, rgba(255, 255, 255, 0.035) 6px 7px),
+		rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--wp-line);
+	clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%);
+	cursor: text;
+	transition:
+		border-color 0.15s ease,
+		background 0.15s ease,
+		box-shadow 0.15s ease;
+}
+
+.wp-search:focus-within {
+	background:
+		repeating-linear-gradient(0deg, transparent 0 6px, rgba(255, 255, 255, 0.045) 6px 7px),
+		color-mix(in srgb, var(--wp-accent) 8%, rgba(0, 0, 0, 0.34));
+	border-color: color-mix(in srgb, var(--wp-accent) 65%, transparent);
+	box-shadow: inset 0 -2px 0 var(--wp-accent);
+}
+
+/* Drive head: LED + magnifier. */
+.wp-search-head {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	flex-shrink: 0;
+	padding: 0 10px 0 9px;
+	background: rgba(0, 0, 0, 0.38);
+	border-right: 1px solid var(--wp-line);
+}
+
+/* Like one lamp of a level crossing: dim while idle, flashing while you type. */
+.wp-search-led {
+	display: block;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: #ff4d4a;
+	box-shadow: 0 0 0 2px rgba(255, 77, 74, 0.22);
+	opacity: 0.35;
+	transition: opacity 0.15s ease;
+}
+
+.wp-search:focus-within .wp-search-led {
+	opacity: 1;
+	animation: wp-cross 1.1s steps(1) infinite;
+}
+
+@keyframes wp-cross {
+	50% {
+		opacity: 0.2;
+	}
+}
+
+.wp-search-icon {
+	flex-shrink: 0;
+	opacity: 0.5;
+	transition:
+		opacity 0.15s ease,
+		color 0.15s ease;
+}
+
+.wp-search:focus-within .wp-search-icon {
+	opacity: 1;
+	color: var(--wp-accent);
+}
+
+.wp-search-input {
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	padding: 0 10px;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	user-select: text;
+	caret-color: var(--wp-accent);
+}
+
+.wp-search-input::placeholder {
+	color: inherit;
+	opacity: 0.38;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+}
+
+.wp-search-clear {
+	align-self: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+	margin-right: 8px;
+	padding: 0;
+	border: 1px solid var(--wp-line);
+	border-radius: 0;
+	color: inherit;
+	background: transparent;
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+
+.wp-search-clear:hover {
+	background: color-mix(in srgb, var(--wp-accent) 40%, transparent);
+}
+
+/* Position in the folder, e.g. "043/052", on the disk's paper-white shutter with its tan slot. */
+.wp-search-count {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	padding: 0 16px 0 10px;
+	background: var(--wp-disk-paper);
+	color: #2b2321;
+	font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.wp-search-count::before {
+	content: "";
+	width: 4px;
+	height: 12px;
+	margin-right: 8px;
+	background: var(--wp-disk-tan);
+	border-radius: 2px 2px 0 0;
+}
+
+/* The drawer: its width is animated to the measured width of the chip bar (see the component), so the
+   search box (flex: 1) is pushed smaller as it slides out. */
+.wp-drawer {
+	flex-shrink: 0;
+	width: 0;
+	overflow: hidden;
+	transition: width 0.34s var(--wp-ease);
+}
+
+.wp-drawer[aria-hidden="true"] {
+	pointer-events: none;
+}
+
+/* The chips share one bar with hairline dividers, which keeps them compact. */
+.wp-chipbar {
+	display: flex;
+	align-items: center;
+	width: max-content;
+	height: 26px;
+	margin-left: 6px; /* DRAWER_GAP */
+	box-sizing: border-box;
+	overflow: hidden;
+	border-radius: 0;
+	background: rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--wp-line);
+	clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+}
+
+/* A strip of hazard stripes caps the bar, like a barrier arm. */
+.wp-chipbar::before {
+	content: "";
+	align-self: stretch;
+	flex-shrink: 0;
+	width: 9px;
+	background: repeating-linear-gradient(135deg, var(--wp-accent) 0 3px, #15110f 3px 6px);
+	border-right: 1px solid var(--wp-line);
+}
+
+.wp-chipbar > * + * {
+	border-left: 1px solid var(--wp-line);
+}
+
+.wp-chip,
+.wp-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	height: 100%;
+	padding: 0 8px;
+	border: 0;
+	border-radius: 0;
+	font: inherit;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: inherit;
+	background: transparent;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+
+.wp-icon {
+	width: 26px;
+	padding: 0;
+}
+
+.wp-chip {
+	font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+.wp-chip:hover {
+	background: color-mix(in srgb, var(--wp-accent) 28%, transparent);
+}
+
+/* Shuffle is the red stop-sign button of the bar. */
+.wp-icon:hover:not(:disabled) {
+	background: #d23a35;
+	color: #fff;
+}
+
+.wp-icon:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.wp-folder {
+	max-width: 110px;
+}
+
+.wp-folder span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Collapse icon, top right: points left while the drawer is closed, flips when it is open. */
+.wp-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	margin-left: 6px;
+	padding: 0;
+	box-sizing: border-box;
+	border-radius: 0;
+	border: 1px solid var(--wp-line);
+	background: rgba(0, 0, 0, 0.3);
+	clip-path: polygon(7px 0, 100% 0, 100% 100%, 0 100%, 0 7px);
+	color: inherit;
+	cursor: pointer;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.wp-toggle svg {
+	transition: transform 0.34s var(--wp-ease);
+}
+
+.wp-toggle.open svg {
+	transform: rotate(180deg);
+}
+
+.wp-toggle:hover {
+	background: color-mix(in srgb, var(--wp-accent) 28%, transparent);
+}
+
+.wp-toggle.open {
+	border-color: color-mix(in srgb, var(--wp-accent) 60%, transparent);
+	color: var(--wp-accent);
+}
+
+/* ---- Stage: the disks ---- */
+.wp-stage {
+	position: relative;
+	flex-shrink: 0;
+	overflow: hidden;
+}
+
+/* The outer card only positions and slides; the look and the bounce are on .wp-card-body. */
+.wp-card {
+	position: absolute;
+	left: 0;
+	top: 0;
+	box-sizing: border-box;
+	cursor: pointer;
+	will-change: transform, width;
+	transition:
+		transform 0.26s var(--wp-ease),
+		width 0.26s var(--wp-ease),
+		filter 0.26s ease;
+}
+
+/* Soft glow behind the selected card (a blurred copy of the accent, so it can follow the body's
+   cut corner and lift with it). */
+.wp-card::before {
+	content: "";
+	position: absolute;
+	inset: 4px;
+	z-index: -1;
+	background: var(--wp-accent);
+	filter: blur(14px);
+	opacity: 0;
+	transition:
+		opacity 0.3s ease,
+		transform var(--wp-pop-ms) var(--wp-pop-ease);
+}
+
+.wp-card.active::before {
+	opacity: 0.45;
+}
+
+/* Pick: no glow on the cards (each one would carry a blurred layer that follows it around). The glow behind the selected
+   disk is one still, soft light in the middle of the panel instead (.wp-panel::before, next to the flashlight below). */
+.wp-stage.pick .wp-card::before {
+	display: none;
+}
+
+/* Every card has the cut top-right corner of a 3.5" disk. */
+.wp-card-body {
+	--cut: 9px;
+	position: relative;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	overflow: hidden;
+	background: var(--wp-plastic);
+	clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%);
+	/* The pop is the `translate` property; `transform` belongs to the float (WallpaperPanel.tsx), so it must not be eased here. */
+	transition:
+		translate var(--wp-pop-ms) var(--wp-pop-ease),
+		box-shadow 0.25s ease;
+}
+
+/* Selection frame: a crisp accent line round the card, with the diagonal of the cut corner. */
+.wp-card-body::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 4;
+	pointer-events: none;
+	opacity: 0;
+	box-shadow: inset 0 0 0 2px var(--wp-accent);
+	background: linear-gradient(
+			225deg,
+			transparent calc(var(--cut) * 0.707 - 1px),
+			var(--wp-accent) calc(var(--cut) * 0.707 - 1px),
+			var(--wp-accent) calc(var(--cut) * 0.707 + 1.4px),
+			transparent calc(var(--cut) * 0.707 + 1.4px)
+		)
+		top right / var(--cut) var(--cut) no-repeat;
+	transition: opacity 0.2s ease;
+}
+
+.wp-card.active .wp-card-body::before {
+	opacity: 1;
+}
+
+/* Strips and grid: the image fills the card. Pick: it becomes the label of a floppy disk (below). */
+.wp-label {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	background: #000;
+}
+
+.wp-label img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	pointer-events: none;
+	transition: transform 0.4s var(--wp-ease);
+}
+
+.wp-card:not(.active):hover .wp-label img {
+	transform: scale(1.06);
+}
+
+.wp-shutter,
+.wp-arrow,
+.wp-holes {
+	display: none;
+}
+
+/* Disk number. Strips: a vertical spine label on the narrow ones, a chip on the wide one. */
+.wp-tag {
+	position: absolute;
+	z-index: 3;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	color: rgba(255, 255, 255, 0.85);
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+	pointer-events: none;
+}
+
+.wp-tag b {
+	font-weight: 700;
+	opacity: 0.6;
+}
+
+.wp-stage.strip .wp-card .wp-tag {
+	left: 7px;
+	bottom: 8px;
+	writing-mode: vertical-rl;
+	transform: rotate(180deg);
+}
+
+.wp-stage.strip .wp-card .wp-tag b {
+	display: none;
+}
+
+.wp-stage.strip .wp-card.active .wp-tag {
+	writing-mode: horizontal-tb;
+	transform: none;
+	left: 18px;
+	bottom: 15px;
+	padding: 2px 6px;
+	background: rgba(0, 0, 0, 0.6);
+	border-left: 2px solid var(--wp-accent);
+	text-shadow: none;
+}
+
+.wp-stage.strip .wp-card.active .wp-tag b {
+	display: inline;
+}
+
+/* Grid: only the selected card carries a number. */
+.wp-stage.grid .wp-card-body {
+	--cut: 7px;
+}
+
+.wp-stage.grid .wp-tag {
+	display: none;
+	left: 5px;
+	bottom: 4px;
+	font-size: 8px;
+}
+
+.wp-stage.grid .wp-card.active .wp-tag {
+	display: block;
+}
+
+.wp-stage.grid .wp-tag b {
+	display: none;
+}
+
+/* Darkening along the bottom keeps the number readable on bright wallpapers. */
+.wp-stage.strip .wp-label::after,
+.wp-stage.grid .wp-label::after {
+	content: "";
+	position: absolute;
+	inset: auto 0 0 0;
+	height: 38%;
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+	pointer-events: none;
+}
+
+/* Strips: a hairline between neighbours, like disks standing in a drawer. */
+.wp-stage.strip .wp-card-body {
+	box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.55);
+}
+
+/* Corner brackets on the selected strip or grid card. */
+.wp-stage.strip .wp-card.active .wp-card-body::after,
+.wp-stage.grid .wp-card.active .wp-card-body::after {
+	content: "";
+	position: absolute;
+	inset: 7px;
+	z-index: 3;
+	pointer-events: none;
+	--b: var(--wp-accent);
+	background:
+		linear-gradient(var(--b), var(--b)) left bottom / 10px 1.5px no-repeat,
+		linear-gradient(var(--b), var(--b)) left bottom / 1.5px 10px no-repeat,
+		linear-gradient(var(--b), var(--b)) right bottom / 10px 1.5px no-repeat,
+		linear-gradient(var(--b), var(--b)) right bottom / 1.5px 10px no-repeat;
+}
+
+/* ---- Pick: a rack of floppy disks, the selected one lifted out ---- */
+.wp-stage.pick .wp-card {
+	transition:
+		transform var(--wp-float-ms) var(--wp-float-ease),
+		filter 0.5s ease;
+}
+
+/* The disk's corners can reach past the top and bottom of the stage as it floats and lifts: clip only the sides (the rack
+   slides in from there). `clip`, unlike `hidden`, does not make a stacking context, so the selected disk can sit above the
+   flashlight below. */
+.wp-stage.pick {
+	overflow-x: clip;
+	overflow-y: visible;
+}
+
+/* The disk, drawn after a 3.5" floppy: the cut corner is top right (like every other card), the other corners are
+   rounded, and the plastic keeps the clear, tinted look it had (--wp-disk and friends). Details, top to bottom: an
+   arrow engraved top left, the metal shutter with its window and the dark plate it slides in (a track on each side),
+   the recess round the label with the wallpaper as the label and the number on its paper strip, and two square
+   holes along the bottom (the left one with a round centre). The proportions are measured from a photo of a real
+   3.5" disk. Sizes are in percent of the disk so it scales with the card. */
+.wp-stage.pick .wp-card-body {
+	--cut: 8px;
+	border-radius: 2px 0 2px 2px;
+	background:
+		/* the cut corner's edge */
+		linear-gradient(
+				225deg,
+				transparent calc(var(--cut) * 0.707 - 0.8px),
+				var(--wp-disk-rim) calc(var(--cut) * 0.707 - 0.8px),
+				var(--wp-disk-rim) calc(var(--cut) * 0.707 + 0.8px),
+				transparent calc(var(--cut) * 0.707 + 0.8px)
+			)
+			top right / var(--cut) var(--cut) no-repeat,
+		/* the beige platter inside the shell: a flat circle, sized from the card so it stays round */
+			radial-gradient(ellipse 44% 44% at 50% 56%, var(--wp-platter) 98.5%, transparent 100%),
+		/* faint frosted light just outside the platter */
+			radial-gradient(ellipse 62% 62% at 50% 56%, rgba(255, 255, 255, 0.1), transparent 100%),
+		var(--wp-disk);
+	box-shadow:
+		inset 0 0 0 1.5px var(--wp-disk-rim),
+		inset 0 0 0 5px rgba(255, 255, 255, 0.07);
+}
+
+/* The selected disk pops up out of the rack (short, with a small overshoot: --wp-pop-ms and --wp-pop-ease on
+   .wp-panel set the transition on .wp-card-body); its glow lifts with it. */
+.wp-stage.pick .wp-card.active .wp-card-body {
+	translate: 0 -14px;
+	will-change: transform;
+}
+
+/* Choosing a wallpaper (Enter or a click): a drive's front plate drops in just above the selected disk (.wp-card::after) and
+   the disk slides up, shutter first, into its slot. It stays in until the wallpaper is applied, and slides back out if the
+   panel stays open. The card is clipped a little above the lifted disk, so the part that has gone in cannot be seen; the
+   plate covers that edge, and the bottom of the disk is left sticking out, like in a real drive. */
+.wp-stage.pick .wp-card.active {
+	clip-path: inset(-24px -40px -40px -40px);
+}
+
+.wp-stage.pick.chosen .wp-card.active .wp-card-body {
+	translate: 0 calc(-100% - 2px);
+	transition:
+		translate 0.55s cubic-bezier(0.5, 0, 0.2, 1) 0.1s,
+		box-shadow 0.25s ease;
+}
+
+.wp-stage.pick .wp-card.active::after {
+	content: "";
+	position: absolute;
+	z-index: 6;
+	left: -9%;
+	right: -9%;
+	top: -24px;
+	height: 11px;
+	box-sizing: border-box;
+	border: 1px solid color-mix(in srgb, var(--wp-disk-rim) 70%, transparent);
+	border-radius: 3px;
+	pointer-events: none;
+	background:
+		/* the light, at the right end */
+		radial-gradient(circle, var(--wp-accent) 0 1.4px, transparent 2.2px) right 6px top 2px / 6px 6px no-repeat,
+		/* the mouth of the slot, a little narrower than the plate */
+		linear-gradient(#050406, #050406) center bottom 1px / calc(100% - 22px) 3px no-repeat,
+		/* the plate */
+		linear-gradient(180deg, color-mix(in srgb, var(--wp-accent) 9%, #3a343a), #17141a);
+	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
+	opacity: 0;
+	translate: 0 -4px;
+	transition:
+		opacity 0.16s ease,
+		translate 0.22s var(--wp-ease);
+}
+
+.wp-stage.pick.chosen .wp-card.active::after {
+	opacity: 1;
+	translate: 0 0;
+}
+
+/* The arrow engraved top left. */
+.wp-stage.pick .wp-arrow {
+	display: block;
+	position: absolute;
+	z-index: 3;
+	left: 3.5%;
+	top: 7.5%;
+	width: 5px;
+	height: 8px;
+	background: var(--wp-disk-rim);
+	opacity: 0.85;
+	clip-path: polygon(50% 0, 100% 46%, 68% 46%, 68% 100%, 32% 100%, 32% 46%, 0 46%);
+}
+
+/* Shutter: the metal slider, flush with the top edge, a bit over half the disk wide and a third tall, rounded at
+   the bottom, with its window on the right. A dark track runs off each side of it (::after on the left, ::before
+   on the right). A faint brushed-metal grain and sheen sit over the paper colour, so the colour is unchanged. */
+.wp-stage.pick .wp-shutter {
+	display: block;
+	position: absolute;
+	z-index: 2;
+	top: 0;
+	left: 24.7%;
+	width: 53.8%;
+	height: 34.3%;
+	border-radius: 0 0 3px 3px;
+	background:
+		repeating-linear-gradient(0deg, rgba(60, 40, 36, 0.045) 0 1px, transparent 1px 2px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.4), transparent 28%, transparent 72%, rgba(60, 40, 36, 0.07)),
+		var(--wp-disk-paper);
+}
+
+.wp-stage.pick .wp-shutter i {
+	position: absolute;
+	top: 15%;
+	bottom: 7%;
+	left: 59%;
+	width: 25%;
+	background: var(--wp-disk-tan);
+	border: 1px solid rgba(96, 82, 76, 0.7);
+	border-radius: 1px;
+	box-sizing: border-box;
+}
+
+.wp-stage.pick .wp-shutter::before {
+	content: "";
+	position: absolute;
+	left: 100%;
+	width: 24%;
+	top: 6%;
+	bottom: -1%;
+	background: rgba(20, 18, 22, 0.32);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wp-disk-rim) 40%, transparent);
+	border-radius: 0 3px 3px 0;
+	box-sizing: border-box;
+}
+
+.wp-stage.pick .wp-shutter::after {
+	content: "";
+	position: absolute;
+	right: 100%;
+	width: 27.5%;
+	top: 6%;
+	bottom: -1%;
+	background: rgba(20, 18, 22, 0.32);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wp-disk-rim) 40%, transparent);
+	border-radius: 3px 0 0 3px;
+	box-sizing: border-box;
+}
+
+/* The recess the label sits in: a faint plate with a thin rim, under the label and its paper strip. */
+.wp-stage.pick .wp-card-body::after {
+	content: "";
+	position: absolute;
+	z-index: 0;
+	inset: 41.5% 9.5% 3.5% 9.5%;
+	border-radius: 3px;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid color-mix(in srgb, var(--wp-disk-rim) 55%, transparent);
+	box-sizing: border-box;
+	pointer-events: none;
+}
+
+/* The wallpaper is the disk's label. No paper strip under it: the picture runs down to where the strip ended. */
+.wp-stage.pick .wp-label {
+	z-index: 1;
+	inset: 44.5% 14% 6% 14%;
+	border-radius: 2px;
+	box-shadow: 0 0 0 1px var(--wp-disk-rim);
+}
+
+/* The number is written on the label's paper strip, on a ruled line. */
+.wp-stage.pick .wp-tag {
+	display: none; /* the paper strip with the number is gone; the number is in the caption pill */
+	align-items: center;
+	justify-content: center;
+	left: 14%;
+	right: 14%;
+	bottom: 6%;
+	height: 14%;
+	transform: none;
+	font-size: 8px;
+	border-radius: 0 0 2px 2px;
+	background:
+		linear-gradient(rgba(60, 40, 36, 0.28), rgba(60, 40, 36, 0.28)) left bottom 27% / 100% 1px no-repeat,
+		var(--wp-disk-paper);
+	color: rgba(52, 42, 40, 0.85);
+	text-shadow: none;
+}
+
+.wp-stage.pick .wp-card.active .wp-tag {
+	color: color-mix(in srgb, var(--wp-accent) 45%, #231c1c);
+}
+
+/* Two holes along the bottom, both square: bottom left with a small round centre, bottom right plain. */
+.wp-stage.pick .wp-holes {
+	display: block;
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	pointer-events: none;
+}
+
+.wp-stage.pick .wp-holes::before,
+.wp-stage.pick .wp-holes::after {
+	content: "";
+	position: absolute;
+	bottom: 6%;
+	width: 5px;
+	height: 5px;
+	background: rgba(10, 10, 12, 0.85);
+	border: 1px solid var(--wp-disk-rim);
+	box-sizing: border-box;
+}
+
+.wp-stage.pick .wp-holes::before {
+	left: 3.5%;
+	border-radius: 1px;
+	background:
+		radial-gradient(circle, var(--wp-disk-rim) 0 0.7px, transparent 1px),
+		rgba(10, 10, 12, 0.85);
+}
+
+.wp-stage.pick .wp-holes::after {
+	right: 3%;
+	border-radius: 1px;
+}
+
+/* ---- Flashlight (Pick). The moment the panel opens, a dark veil covers the whole notch with a soft round hole on the selected
+   disk, like a torch in a dark room (the same idea as the Media tab's .mt-veil and the Time gun's vignette). It is
+   .wp-panel::after, drawn above everything in the panel except the selected card (z-index 2, inline) and the search row and
+   caption (.wp-top, .wp-foot: they stay bright so they can be read). It reaches 36px above the panel so the bar is dimmed too.
+   --wp-spot-clear is the fully lit radius, --wp-spot-soft how far the light takes to fade out, --wp-spot-dark how dark the
+   rest gets (0 to 1). --wp-spot-y is the height of the lit spot, from the top of the notch: 36px bar + 2px padding + 28px
+   search row + 6px gap + 62px (the middle of the lifted disk) = 134px. Change it if the disks are moved. A faint accent ring
+   sits just outside the lit circle. ---- */
+.wp-panel {
+	--wp-spot-clear: 70px;
+	--wp-spot-soft: 210px;
+	--wp-spot-dark: 0.68;
+	--wp-spot-y: 134px;
+	/* The notch has a frame around the panel; the veil reaches out over it on the left, right and bottom (the top already
+	   starts at the notch's edge). If the dark shows outside the notch, lower this. */
+	--wp-veil-bleed: 12px;
+}
+
+.wp-panel::after {
+	content: "";
+	position: absolute;
+	inset: -36px calc(var(--wp-veil-bleed) * -1) calc(var(--wp-veil-bleed) * -1) calc(var(--wp-veil-bleed) * -1);
+	z-index: 1;
+	pointer-events: none;
+	border-radius: 28px;
+	opacity: 0;
+	transition: opacity 0.45s ease;
+	background:
+		radial-gradient(
+			circle at 50% var(--wp-spot-y),
+			transparent 40px,
+			color-mix(in srgb, var(--wp-accent) 16%, transparent) var(--wp-spot-clear),
+			color-mix(in srgb, var(--wp-accent) 7%, transparent) calc(var(--wp-spot-clear) + 26px),
+			transparent calc(var(--wp-spot-clear) + 60px)
+		),
+		radial-gradient(
+			circle at 50% var(--wp-spot-y),
+			transparent var(--wp-spot-clear),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 0.028)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 0.1),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 0.104)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 0.2),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 0.216)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 0.3),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 0.352)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 0.4),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 0.500)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 0.5),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 0.648)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 0.6),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 0.784)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 0.7),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 0.896)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 0.8),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 0.972)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 0.9),
+			rgba(0, 0, 0, calc(var(--wp-spot-dark) * 1.000)) calc(var(--wp-spot-clear) + var(--wp-spot-soft) * 1)
+		);
+}
+
+/* On in the Pick layout only. */
+.wp-panel:has(.wp-stage.pick)::after {
+	opacity: 1;
+}
+
+/* The glow behind the selected disk: one still, soft light at the same spot as the flashlight (the selected disk is always in the
+   middle), under the veil and the disks, so it shows through the clear shells. Nothing moves and nothing is blurred: it is
+   a single gradient that falls off smoothly (about squared) to nothing, so it costs next to nothing to draw.
+   --wp-glow is how strong it is at the centre; --wp-glow-w and --wp-glow-h are how far it reaches. */
+.wp-panel {
+	--wp-glow: 0.26;
+	--wp-glow-w: 240px;
+	--wp-glow-h: 128px;
+}
+
+.wp-panel::before {
+	content: "";
+	position: absolute;
+	inset: -36px 0 0 0;
+	pointer-events: none;
+	border-radius: 28px;
+	opacity: 0;
+	transition: opacity 0.45s ease;
+	background: radial-gradient(
+		ellipse var(--wp-glow-w) var(--wp-glow-h) at 50% var(--wp-spot-y),
+		color-mix(in srgb, var(--wp-accent) calc(var(--wp-glow) * 100%), transparent) 0%,
+		color-mix(in srgb, var(--wp-accent) calc(var(--wp-glow) * 72%), transparent) 15%,
+		color-mix(in srgb, var(--wp-accent) calc(var(--wp-glow) * 49%), transparent) 30%,
+		color-mix(in srgb, var(--wp-accent) calc(var(--wp-glow) * 30%), transparent) 45%,
+		color-mix(in srgb, var(--wp-accent) calc(var(--wp-glow) * 16%), transparent) 60%,
+		color-mix(in srgb, var(--wp-accent) calc(var(--wp-glow) * 6%), transparent) 75%,
+		color-mix(in srgb, var(--wp-accent) calc(var(--wp-glow) * 1%), transparent) 90%,
+		transparent 100%
+	);
+}
+
+.wp-panel:has(.wp-stage.pick)::before {
+	opacity: 1;
+}
+
+/* The search row and the caption stay above the flashlight. The search box, its drawer of options and the toggle are lighter
+   than the notch (a pale fill, an accent line under them and a clearer edge), so they read as fields on the dark. */
+.wp-top,
+.wp-foot {
+	z-index: 3;
+}
+
+.wp-search {
+	background:
+		repeating-linear-gradient(0deg, transparent 0 6px, rgba(255, 255, 255, 0.04) 6px 7px),
+		color-mix(in srgb, var(--wp-accent) 7%, rgba(255, 255, 255, 0.09));
+	border-color: color-mix(in srgb, var(--wp-accent) 32%, rgba(255, 255, 255, 0.2));
+	box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--wp-accent) 55%, transparent);
+}
+
+.wp-search-head {
+	background: rgba(0, 0, 0, 0.32);
+}
+
+.wp-search-icon {
+	opacity: 0.8;
+}
+
+.wp-search-input {
+	font-size: 12px;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.wp-search-input::placeholder {
+	opacity: 0.62;
+}
+
+.wp-chipbar,
+.wp-toggle {
+	background: color-mix(in srgb, var(--wp-accent) 7%, rgba(255, 255, 255, 0.09));
+	border-color: color-mix(in srgb, var(--wp-accent) 32%, rgba(255, 255, 255, 0.2));
+}
+
+/* A timeline rail under the disks: ticks, with a marker under the selected one. */
+.wp-stage.pick::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 7px;
+	pointer-events: none;
+	background:
+		linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)) bottom / 100% 1px no-repeat,
+		repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 8px) bottom / 100% 4px no-repeat;
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+	mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+
+.wp-stage.pick::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: 0;
+	width: 9px;
+	height: 6px;
+	margin-left: -4.5px;
+	pointer-events: none;
+	background: var(--wp-accent);
+	clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+/* ---- Loading / unreadable ---- */
+/* A scan line sweeping over scan-line stripes: the disk is being read. */
+.wp-skel {
+	width: 100%;
+	height: 100%;
+	background:
+		repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 4px),
+		linear-gradient(90deg, transparent, color-mix(in srgb, var(--wp-accent) 38%, transparent), transparent);
+	background-size:
+		100% 100%,
+		45% 100%;
+	background-repeat: no-repeat;
+	animation: wp-scan 1.1s linear infinite;
+}
+
+/* An image the backend could not read: hatched, like a bad sector, so it is clear it is not just slow. */
+.wp-skel.failed {
+	animation: none;
+	background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 3px, transparent 3px 8px);
+}
+
+@keyframes wp-scan {
+	from {
+		background-position:
+			0 0,
+			-60% 0;
+	}
+	to {
+		background-position:
+			0 0,
+			160% 0;
+	}
+}
+
+@keyframes wp-led {
+	50% {
+		opacity: 0.45;
+	}
+}
+
+.wp-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	border: 1px dashed color-mix(in srgb, var(--wp-accent) 45%, transparent);
+	border-radius: 3px;
+	font: inherit;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	text-align: center;
+	color: inherit;
+	background: rgba(0, 0, 0, 0.2);
+	cursor: pointer;
+}
+
+.wp-empty svg {
+	color: var(--wp-accent);
+}
+
+.wp-empty em {
+	font-style: normal;
+	font-size: 9px;
+	font-weight: 500;
+	letter-spacing: 0.1em;
+	opacity: 0.55;
+}
+
+button.wp-empty:hover {
+	background: color-mix(in srgb, var(--wp-accent) 12%, rgba(0, 0, 0, 0.2));
+}
+
+.wp-empty.reading {
+	cursor: default;
+	animation: wp-led 1.2s ease-in-out infinite;
+}
+
+/* ---- Caption: disk number, file name, fit mode, in one label strip under the disks ---- */
+.wp-foot {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 24px;
+	flex-shrink: 0;
+}
+
+.wp-pill {
+	display: inline-flex;
+	align-items: stretch;
+	justify-content: center;
+	max-width: 100%;
+	height: 22px;
+	box-sizing: border-box;
+	overflow: hidden;
+	border-radius: 0;
+	border: 1px solid var(--wp-line);
+	clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+	font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 20px;
+	text-align: center;
+	letter-spacing: 0.04em;
+	background: var(--glass, rgba(0, 0, 0, 0.32));
+	color: var(--text, white);
+	white-space: nowrap;
+}
+
+/* A status message ("Restoring memory…") is plain text inside the pill, with an accent edge. */
+.wp-pill:not(:has(.wp-pill-no)) {
+	padding: 0 12px 0 14px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	border-left: 3px solid var(--wp-accent);
+}
+
+.wp-pill-no,
+.wp-pill-fit {
+	flex-shrink: 0;
+	padding: 0 8px;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Disk number: a solid accent plate, the cut corner of the pill is its corner. */
+.wp-pill-no {
+	padding: 0 10px 0 12px;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+	color: #17120f;
+	background: var(--wp-accent);
+}
+
+/* Fit mode: stamped on, after a dashed perforation. */
+.wp-pill-fit {
+	opacity: 0.75;
+	border-left: 1px dashed rgba(255, 255, 255, 0.25);
+}
+
+/* File name: written on the disk's paper label, on ruled lines. */
+.wp-pill-name {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	padding: 0 14px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	background:
+		repeating-linear-gradient(0deg, transparent 0 5px, rgba(60, 40, 36, 0.1) 5px 6px),
+		var(--wp-disk-paper);
+	color: #2b2321;
+}
+
+.wp-pill-text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.wp-pill.error {
+	color: #ff8a8a;
+	white-space: normal;
+	height: auto;
+	min-height: 22px;
+	padding-top: 0;
+	padding-bottom: 0;
+	line-height: 1.3;
+}
+
+/* ---- Opening animation (Pick): the row spins in from a few disks behind the wallpaper in use ---- */
+.wp-track {
+	position: absolute;
+	inset: 0;
+}
+
+.wp-track.prep {
+	transform: translateX(var(--wp-intro-x, 0));
+}
+
+.wp-track.go {
+	/* Rests at none; the slide onto it is drawn in WallpaperPanel.tsx with the Web Animations API (INTRO_IN_EASE, INTRO_BACK_EASE). */
+	transform: none;
+	transition: none;
+}
+
+/* While it slides, the disk under the arrow pops up as it passes, so the pop is quicker than usual. */
+.wp-stage.pick.introing .wp-card {
+	transition:
+		transform 0.34s var(--wp-ease),
+		filter 0.12s ease;
+}
+
+.wp-stage.pick.introing .wp-card-body {
+	transition:
+		transform 0.22s var(--wp-pop-ease),
+		box-shadow 0.25s ease;
+}
+
+.wp-stage.pick.introing .wp-card::before {
+	transition:
+		opacity 0.12s ease,
+		transform 0.22s var(--wp-pop-ease);
+}
+
+.wp-stage.introing .wp-card-body::before {
+	transition: opacity 0.08s ease;
+}
+
+/* First half second: the notch is still growing, so place the cards without sliding them. */
+.wp-stage.settling:not(.introing) .wp-card,
+.wp-stage.settling:not(.introing) .wp-card-body,
+.wp-stage.settling:not(.introing) .wp-card::before {
+	transition: none !important;
+}
+
+/* The opening slide starts inside that half second: cards still get placed without sliding, but the pop of
+   the disk under the arrow (body, frame, glow) and its brightness keep their animation. */
+.wp-stage.settling.introing .wp-card {
+	transition: filter 0.12s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wp-track.prep,
+	.wp-track.go {
+		transform: none;
+		transition: none;
+	}
+	.wp-panel::after {
+		transition: none;
+	}
+	.wp-panel::before,
+	.wp-stage.pick .wp-card.active::after,
+	.wp-stage.pick.chosen .wp-card.active .wp-card-body {
+		transition: none;
+	}
+	.wp-card,
+	.wp-card::before,
+	.wp-card-body,
+	.wp-label img,
+	.wp-drawer,
+	.wp-toggle svg {
+		transition: none;
+	}
+	.wp-skel,
+	.wp-empty.reading,
+	.wp-search:focus-within .wp-search-led {
+		animation: none;
+	}
+}
+
+/* Delete: the card flashes red, then drops and shrinks away (the file and its cache are removed meanwhile).
+   Keep the duration equal to DELETE_ANIM_MS in WallpaperPanel.tsx. */
+.wp-card.deleting {
+	pointer-events: none;
+	z-index: 3;
+}
+.wp-card.deleting::before {
+	opacity: 0;
+}
+.wp-card.deleting .wp-card-body {
+	animation: wp-erase 0.42s cubic-bezier(0.5, 0, 0.9, 0.4) forwards;
+}
+@keyframes wp-erase {
+	0% {
+		opacity: 1;
+		scale: 1;
+		rotate: 0deg;
+		top: 0;
+		filter: none;
+	}
+	22% {
+		scale: 1.05;
+		top: -4px;
+		filter: brightness(1.3) sepia(1) saturate(5) hue-rotate(-42deg);
+	}
+	100% {
+		opacity: 0;
+		scale: 0.5;
+		rotate: 16deg;
+		top: 56px;
+		filter: brightness(0.6) sepia(1) saturate(5) hue-rotate(-42deg) blur(2px);
+	}
+}
+.wp-trash:not(:disabled):hover {
+	color: #ff6b5e;
+}
+@media (prefers-reduced-motion: reduce) {
+	.wp-card.deleting .wp-card-body {
+		animation: wp-erase-fade 0.2s ease forwards;
+	}
+	@keyframes wp-erase-fade {
+		to {
+			opacity: 0;
+		}
+	}
+}

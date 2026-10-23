@@ -1,0 +1,59 @@
+/* The GIF card on the dashboard (it takes the slot the usage bars had): a picture the user picks,
+   shown as it is. --gif-tint (the theme accent) only colours the focus ring and the empty card.
+   Loaded after Dashboard.css. */
+
+.dash-gif {
+	--gif-tint: var(--bloom-accent, #ff9f0a);
+	--gif-tint-strength: 0.4;
+	--gif-gray: 0.4;
+
+	grid-area: bars;
+	/* Same shift the calendar gives up on its right (see --cal-bars-shift in Dashboard.css). */
+	margin-left: calc(var(--cal-bars-shift, 0px) * -1);
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	cursor: pointer;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	color: var(--bloom-text-muted, rgba(255, 255, 255, 0.65));
+}
+
+.dash-gif:focus-visible {
+	outline: 2px solid var(--gif-tint);
+	outline-offset: -2px;
+}
+
+/* Nothing picked yet: a dashed outline in the tint colour and a hint. */
+.dash-gif:not(.has-img) {
+	box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--gif-tint) 45%, transparent);
+}
+
+.dash-gif:not(.has-img) svg {
+	color: var(--gif-tint);
+}
+
+.dash-gif-img {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	user-select: none;
+	pointer-events: none;
+}
+
+.theme-retro .dash-gif {
+	--gif-tint: var(--retro-accent, var(--bloom-accent, #ff9f0a));
+	color: var(--retro-ink-muted, #5a5148);
+}
+
+.theme-retro .dash-gif:not(.has-img) svg {
+	color: var(--retro-ink, #2b2b2b);
+}

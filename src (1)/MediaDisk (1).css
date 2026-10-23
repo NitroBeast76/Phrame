@@ -1,0 +1,227 @@
+/* The disk (floppy) on the Media tab. While music plays it turns slowly, in visible steps (a low
+   framerate), and glows. When the music pauses it spins back to where it started, and the glow
+   fades away. */
+
+.mt-disk {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	position: relative;
+	/* Size of the disk in px. */
+	width: 110px;
+	height: 110px;
+	/* Rasterise once and rotate on the GPU: the blurred glow copy is no longer repainted on every step. */
+	will-change: transform;
+	/* The turning, and the spin back on pause, come from MediaTab.tsx (framer-motion), not from
+	   CSS: DISK_TURN_SECONDS and DISK_STEPS there set the speed and how choppy it is. */
+}
+
+.mt-disk > :first-child {
+	width: 100%;
+	height: 100%;
+}
+
+/* Only this wrapper turns. Nothing inside it, and nothing on the cover around it, may spin on
+   its own: a second, smooth turn on top of the ticking one made it look jumpy. */
+.mt-art,
+.mt-disk > :first-child,
+.mt-disk > :first-child *,
+.mt-disk-glow * {
+	animation: none !important;
+}
+
+/* ---- Glow. Outside: a blurred copy of the disk sits behind it, so the glow has exactly the disk's
+   shape and turns with it. Inside: a soft white light over the middle of the disk. Both fade in
+   with the music (the moment it starts) and out when it stops. Change 7px for a wider or tighter
+   glow, and the opacity for a stronger or fainter one. ---- */
+.mt-disk-glow {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
+	filter: blur(6px) brightness(1.2) saturate(1.15);
+	opacity: 0;
+	transition: opacity 0.45s ease-out;
+}
+
+.mt-disk-glow > * {
+	width: 100%;
+	height: 100%;
+}
+
+.mt-disk::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 96px;
+	height: 96px;
+	margin: -48px 0 0 -48px;
+	z-index: 1;
+	border-radius: 50%;
+	pointer-events: none;
+	mix-blend-mode: normal;
+	background: radial-gradient(
+		circle,
+		rgba(235, 244, 255, 0.75) 0%,
+		rgba(205, 225, 255, 0.35) 38%,
+		rgba(205, 225, 255, 0) 70%
+	);
+	opacity: 0;
+	transition: opacity 0.45s ease-out;
+}
+
+.mt-ring.playing .mt-disk-glow {
+	opacity: 0.4;
+}
+
+/* The white light over the centre, toned down (was 0.9). */
+.mt-ring.playing .mt-disk::before {
+	opacity: 0.45;
+}
+
+/* On hover the disk dims only a little (--mt-floppy-hover below). Only the white light in the
+   middle is toned down further, so it does not sit bright on the disk behind the "OUTPUT" hint. */
+.mt-ring.playing .mt-art:hover .mt-disk::before,
+.mt-ring.playing .mt-art:focus-visible .mt-disk::before,
+.mt-ring.playing .mt-art.vol .mt-disk::before {
+	opacity: 0.45;
+}
+
+/* On hover the glow behind the disk stays on, a little softer, so the lit disk keeps its halo. */
+.mt-ring.playing .mt-art:hover .mt-disk-glow,
+.mt-ring.playing .mt-art:focus-visible .mt-disk-glow,
+.mt-ring.playing .mt-art.vol .mt-disk-glow {
+	opacity: 0.4;
+}
+
+/* ---- Flashlight. While the cover is hovered (or the volume is being changed) a dark veil fades in
+   over the whole tab, with a soft round hole around the OUTPUT hint, like a torch in a dark room.
+   .mt-spot is a huge, click-through layer centred on the cover (MediaTab.tsx); the tab's own edge
+   clips it. To tune: --mt-spot-clear is the fully lit radius, --mt-spot-soft how far the light
+   takes to fade out, --mt-spot-dark how dark the rest gets (0 to 1), and --mt-spot-x / -y
+   shift the light if it does not sit on the hint. --mt-floppy-hover is how bright the disk stays
+   while hovered (0.45 was the old dim look, 1 is full brightness). The lit circle now reaches past
+   the disk, so the whole floppy is lit, not just its middle. ---- */
+.mt-art {
+	--mt-spot-clear: 62px;
+	--mt-spot-soft: 70px;
+	--mt-spot-dark: 0.88;
+	--mt-spot-x: 50%;
+	--mt-spot-y: 50%;
+	--mt-floppy-hover: 1;
+}
+
+.mt-spot {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 1600px;
+	height: 900px;
+	transform: translate(-50%, -50%);
+	z-index: 5;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	background:
+		radial-gradient(
+			circle at var(--mt-spot-x) var(--mt-spot-y),
+			transparent calc(var(--mt-spot-clear) - 4px),
+			color-mix(in srgb, var(--bloom-accent, #ff9f0a) 14%, transparent) calc(var(--mt-spot-clear) + 10px),
+			transparent calc(var(--mt-spot-clear) + 38px)
+		),
+		radial-gradient(
+			circle at var(--mt-spot-x) var(--mt-spot-y),
+			transparent var(--mt-spot-clear),
+			rgba(0, 0, 0, calc(var(--mt-spot-dark) * 0.55)) calc(var(--mt-spot-clear) + var(--mt-spot-soft) * 0.45),
+			rgba(0, 0, 0, var(--mt-spot-dark)) calc(var(--mt-spot-clear) + var(--mt-spot-soft))
+		);
+}
+
+/* The disk sits above the veil, so the flashlight never dims it, whatever its size or angle. The
+   hint label goes above the disk so it still reads. */
+.mt-disk {
+	z-index: 6;
+}
+
+.mt-art-hint {
+	z-index: 7;
+}
+
+/* The label sits on the bright disk now, so it is dark amber instead of near-white. */
+.mt-art:hover .mt-art-hint-label,
+.mt-art:focus-visible .mt-art-hint-label,
+.mt-art.vol .mt-art-hint-label {
+	color: color-mix(in srgb, var(--bloom-accent, #ff9f0a) 35%, #2a1800);
+	text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
+}
+
+/* Lift the hovered cover above the rest of the tab so its veil covers the title, controls and
+   waveform too. */
+.mt-art:hover,
+.mt-art:focus-visible,
+.mt-art.vol {
+	z-index: 40;
+}
+
+.mt-art:hover .mt-spot,
+.mt-art:focus-visible .mt-spot,
+.mt-art.vol .mt-spot {
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mt-spot {
+		transition: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mt-disk {
+		animation: none;
+	}
+}
+
+/* ---- Hover veil on the whole notch. Drawn by MediaTab.tsx onto the notch itself (the outermost
+   rounded box around the tab), so it covers the clock, the tabs and the corners too, with no
+   hard rectangle where the tab ends. Same look as the flashlight above: a soft round window
+   around the disk (centred by --mt-veil-x / --mt-veil-y, set from the code), a faint accent ring
+   at its edge, and everything outside it darkened. --mt-veil-clear is the fully lit radius (big
+   enough for the disk's corners as it turns), --mt-veil-soft how far the light takes to fade
+   out, --mt-veil-dark how dark the rest gets (0 to 1). When this veil is in use the old one
+   inside the tab (.mt-spot) is hidden. ---- */
+.mt-veil {
+	--mt-veil-clear: 84px;
+	--mt-veil-soft: 60px;
+	--mt-veil-dark: 0.88;
+	position: absolute;
+	inset: 0;
+	z-index: 100;
+	pointer-events: none;
+	border-radius: inherit;
+	background:
+		/* Soft warm light that fills the gap between the disk and the edge of the lit circle, so
+		   there is no dark ring around the disk. Same reach as the old accent ring. */
+		radial-gradient(
+			circle at var(--mt-veil-x, 50%) var(--mt-veil-y, 50%),
+			transparent 40px,
+			color-mix(in srgb, var(--bloom-accent, #ff9f0a) 14%, transparent) var(--mt-veil-clear),
+			color-mix(in srgb, var(--bloom-accent, #ff9f0a) 7%, transparent) calc(var(--mt-veil-clear) + 20px),
+			transparent calc(var(--mt-veil-clear) + 38px)
+		),
+		/* dark veil: same size as before, but eased so there is no visible band */
+		radial-gradient(
+			circle at var(--mt-veil-x, 50%) var(--mt-veil-y, 50%),
+			transparent var(--mt-veil-clear),
+			rgba(0, 0, 0, calc(var(--mt-veil-dark) * 0.1)) calc(var(--mt-veil-clear) + var(--mt-veil-soft) * 0.2),
+			rgba(0, 0, 0, calc(var(--mt-veil-dark) * 0.3)) calc(var(--mt-veil-clear) + var(--mt-veil-soft) * 0.4),
+			rgba(0, 0, 0, calc(var(--mt-veil-dark) * 0.58)) calc(var(--mt-veil-clear) + var(--mt-veil-soft) * 0.6),
+			rgba(0, 0, 0, calc(var(--mt-veil-dark) * 0.82)) calc(var(--mt-veil-clear) + var(--mt-veil-soft) * 0.8),
+			rgba(0, 0, 0, var(--mt-veil-dark)) calc(var(--mt-veil-clear) + var(--mt-veil-soft))
+		);
+}
+
+.mt-root.veiled .mt-spot {
+	display: none;
+}

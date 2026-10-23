@@ -1,0 +1,22 @@
+/* Theme popup (Command Center) */
+.cc-theme-toast-wrap {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 10px;
+	display: flex;
+	justify-content: center;
+	pointer-events: none;
+	z-index: 6;
+}
+
+.cc-theme-toast {
+	padding: 6px 14px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+	color: var(--bloom-bg-expanded, #000);
+	background: var(--bloom-text, #fff);
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}

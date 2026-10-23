@@ -1,0 +1,21 @@
+/* The hand-made hit spark (sparkBurst.ts), drawn white with a cyan edge and a teal middle. It is loaded after TimeGun.css
+   so these rules win over the older spark rules there (which are no longer used). The burst is played one frame at a time
+   by SparkLoop in TimeGun.tsx, over and over while the timer runs. */
+.tg-burn {
+	filter: drop-shadow(0 0 2px rgba(77, 230, 255, 0.95)) drop-shadow(0 0 6px rgba(77, 230, 255, 0.6));
+}
+
+.tg-bs-edge {
+	fill: #4de6ff;
+	stroke: #4de6ff;
+	stroke-width: 1.5;
+	stroke-linejoin: round;
+}
+
+.tg-bs-fill {
+	fill: #ffffff;
+}
+
+.tg-bs-core {
+	fill: #7fe3ec;
+}

@@ -1,0 +1,51 @@
+/* Full-screen wallpaper preview (WallpaperPreview.tsx), drawn by the "wp-preview" window. The window
+   is transparent, so fading out reveals the real wallpaper. FADE_OUT_MS in the .tsx must match the
+   .2s below. */
+
+/* Only the preview window gets this class, so the rest of Bloom is untouched. */
+html.wpv-page,
+html.wpv-page body,
+html.wpv-page #root {
+	margin: 0;
+	background: transparent !important;
+	overflow: hidden;
+}
+
+.wpv {
+	position: fixed;
+	inset: var(--wpv-top, 0px) 0 0 0;
+	overflow: hidden;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.wpv.on {
+	opacity: 1;
+	transition: none;
+}
+
+/* Each new picture fades in on top of the one before it, so there is never a dip to the desktop. */
+.wpv-layer {
+	position: absolute;
+	inset: 0;
+	background-color: #000;
+	background-position: center;
+	will-change: opacity;
+	animation: wpv-in 0.45s ease both;
+}
+
+@keyframes wpv-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wpv-layer {
+		animation: none;
+	}
+}
