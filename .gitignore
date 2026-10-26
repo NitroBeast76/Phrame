@@ -36,3 +36,7 @@ skills-lock.json
 
 #agents
 .mimocode
+
+# Rust / Tauri build output
+target/
+src-tauri/target/
